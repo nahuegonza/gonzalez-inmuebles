@@ -1,18 +1,1 @@
-/
-├── index.html
-├── assets/
-│   ├── images/
-│   └── icons/
-├── css/
-│   └── styles.css
-├── js/
-│   ├── main.js
-│   ├── navigation.js
-│   └── storage.js
-├── pages/
-│   ├── properties.html
-│   ├── tasacion.html
-│   └── contacto.html
-├── admin/
-│   ├── index.html
-│   └── admin.js
+
