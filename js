@@ -81,10 +81,16 @@
         }
 
         // 3. LÓGICA DE RENDERIZADO (Frontend)
-        function renderPublicProperties() {
-            const grid = document.getElementById('propertiesGrid');
-            const emptyState = document.getElementById('emptyState');
-            grid.innerHTML = '';
+       function renderPublicProperties() {
+ const grid = document.getElementById('propertiesGrid');
+
+  if (!grid) {
+    return;
+  }
+
+  const emptyState = document.getElementById('emptyState');
+  ...
+}
 
             if (properties.length === 0) {
                 emptyState.classList.remove('hidden');
