@@ -719,47 +719,63 @@
 
                 const aiString = `${prop.title} en ${prop.location}, ${prop.currency} ${formattedPrice}, ${prop.beds} hab, ${prop.baths} baños, ${prop.sqm} m²`;
 
-                const cardHTML = `
-                    <article class="bg-white rounded-[16px] overflow-hidden shadow-soft group flex flex-col">
-                        <div class="relative h-64 overflow-hidden shrink-0">
-                            <div class="absolute top-4 left-4 z-10 ${tagClass} text-xs font-bold px-3 py-1.5 rounded-full shadow-md uppercase">
-                                EN ${prop.operation}
-                            </div>
-                            <img src="${prop.image}" alt="${prop.title}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                        </div>
-                        <div class="p-6 flex flex-col flex-1 justify-between">
-                            <div>
-                                <h3 class="font-heading font-bold text-2xl text-brand-green mb-1">${prop.currency} ${formattedPrice} ${priceSuffix}</h3>
-                                <p class="text-brand-dark font-medium text-lg mb-1 line-clamp-1">${prop.title}</p>
-                                <p class="text-brand-gray text-sm flex items-center gap-1 mb-6">
-                                    <i data-lucide="map-pin" class="w-3.5 h-3.5"></i> ${prop.location}
-                                </p>
-                                
-                                <div class="flex items-center justify-between border-t border-gray-100 pt-4 mb-6">
-                                    <div class="flex items-center gap-1.5 text-brand-gray text-sm" title="Habitaciones">
-                                        <i data-lucide="bed-double" class="w-4 h-4 text-brand-dark"></i> <span class="font-medium text-brand-dark">${prop.beds}</span>
-                                    </div>
-                                    <div class="flex items-center gap-1.5 text-brand-gray text-sm" title="Baños">
-                                        <i data-lucide="bath" class="w-4 h-4 text-brand-dark"></i> <span class="font-medium text-brand-dark">${prop.baths}</span>
-                                    </div>
-                                    <div class="flex items-center gap-1.5 text-brand-gray text-sm" title="Metros Cuadrados">
-                                        <i data-lucide="maximize" class="w-4 h-4 text-brand-dark"></i> <span class="font-medium text-brand-dark">${prop.sqm}</span> m²
-                                    </div>
-                                </div>
-                            </div>
+const cardHTML = `
+  <article class="bg-white rounded-[16px] overflow-hidden shadow-soft group flex flex-col">
+    <div class="relative h-64 overflow-hidden shrink-0">
+      <div class="absolute top-4 left-4 z-10 ${tagClass} text-xs font-bold px-3 py-1.5 rounded-full shadow-md uppercase">
+        EN ${prop.operation}
+      </div>
 
-                            <div class="flex flex-col gap-3">
-                                <a href="#" class="block text-center w-full py-2.5 rounded-xl border-2 border-brand-green text-brand-green font-semibold hover:bg-brand-green hover:text-white transition-colors">
-                                    Ver detalles
-                                </a>
-                                <button onclick="generatePropertyStory('${aiString}')" class="block text-center w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 text-brand-green font-semibold hover:from-emerald-100 hover:to-teal-100 transition-colors border border-emerald-200">
-                                    ✨ Imaginá tu vida acá
-                                </button>
-                            </div>
-                        </div>
-                    </article>
-                `;
+      <img 
+        src="${prop.image}" 
+        alt="${prop.title}" 
+        class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+      >
+
+      <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+    </div>
+
+    <div class="p-6 flex flex-col flex-1 justify-between">
+      <div>
+        <h3 class="font-heading font-bold text-2xl text-brand-green mb-1">
+          ${prop.currency} ${formattedPrice}
+        </h3>
+
+        <p class="text-brand-dark font-medium text-lg mb-1 line-clamp-1">
+          ${prop.title}
+        </p>
+
+        <p class="text-brand-gray text-sm flex items-center gap-1 mb-6">
+          <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
+          ${prop.location}
+        </p>
+
+        <div class="flex items-center justify-between border-t border-gray-100 pt-4 mb-6">
+          <div class="flex items-center gap-1.5 text-brand-gray text-sm">
+            <i data-lucide="bed-double" class="w-4 h-4"></i>
+            <span class="font-medium text-brand-dark">${prop.beds}</span>
+          </div>
+
+          <div class="flex items-center gap-1.5 text-brand-gray text-sm">
+            <i data-lucide="bath" class="w-4 h-4"></i>
+            <span class="font-medium text-brand-dark">${prop.baths}</span>
+          </div>
+
+          <div class="flex items-center gap-1.5 text-brand-gray text-sm">
+            <i data-lucide="maximize" class="w-4 h-4"></i>
+            <span class="font-medium text-brand-dark">${prop.sqm}</span> m²
+          </div>
+        </div>
+      </div>
+
+      <button
+        onclick="generatePropertyStory(decodeURIComponent('${encodeURIComponent(aiString)}'))"
+        class="w-full py-2.5 rounded-xl bg-emerald-50 text-brand-green font-semibold hover:bg-emerald-100 transition-colors border border-emerald-200">
+        ✨ Imaginá tu vida acá
+      </button>
+    </div>
+  </article>
+`;
                 grid.insertAdjacentHTML('beforeend', cardHTML);
             });
             lucide.createIcons();
