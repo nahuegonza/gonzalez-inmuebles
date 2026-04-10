@@ -83,7 +83,7 @@ document.addEventListener("DOMContentLoaded", () => {
       baths: 1,
       sqm: 105,
       image:
-        "https://www.canva.com/design/DAHGdLucpog/fe_droQ2TCneCw87rUTodQ/view?utm_content=DAHGdLucpog&utm_campaign=designshare&utm_medium=link&utm_source=viewer",
+        "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80",
     },
   ];
 
