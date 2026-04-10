@@ -202,4 +202,23 @@ document.addEventListener("DOMContentLoaded", () => {
   renderPublicProperties();
   renderAdminTable();
 });
+// ===============================
+// HOME SEARCH → PROPERTIES PAGE
+// ===============================
+const searchBtn = document.getElementById("searchButton");
 
+if (searchBtn) {
+  searchBtn.addEventListener("click", () => {
+    const operation = document.getElementById("searchOperation")?.value;
+    const type = document.getElementById("searchType")?.value;
+    const location = document.getElementById("searchLocation")?.value;
+
+    const params = new URLSearchParams();
+
+    if (operation) params.append("operacion", operation);
+    if (type) params.append("tipo", type);
+    if (location) params.append("ubicacion", location);
+
+    window.location.href = `pages/properties.html?${params.toString()}`;
+  });
+}
