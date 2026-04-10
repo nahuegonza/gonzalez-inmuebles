@@ -1,19 +1,65 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="scroll-smooth">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Propiedades | González Inmuebles</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 
-<body>
+<body class="bg-gray-50 text-gray-900">
 
-  <h1>Propiedades</h1>
+  <!-- Header -->
+  <header class="bg-white border-b sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
 
-  <div id="propertiesGrid"></div>
+      <a href="../index.html" class="flex items-center gap-3">
+        <!-- PEGÁ ACÁ EL SVG DEL LOGO (el mismo que en index.html) -->
+      </a>
 
-  <div id="emptyState" class="hidden">
-    <p>No hay propiedades disponibles</p>
-  </div>
+      <nav class="flex gap-6 text-sm font-medium">
+        <a href="../index.html" class="hover:text-emerald-600">Inicio</a>
+        <a href="properties.html" class="text-emerald-600">Propiedades</a>
+        <a href="tasacion.html" class="hover:text-emerald-600">Tasación</a>
+        <a href="contacto.html" class="hover:text-emerald-600">Contacto</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="bg-white py-16 border-b">
+    <div class="max-w-7xl mx-auto px-6">
+      <h1 class="text-4xl font-bold mb-2">Propiedades disponibles</h1>
+      <p class="text-gray-600 max-w-2xl">
+        Explorá nuestro catálogo completo de propiedades en venta y alquiler.
+      </p>
+    </div>
+  </section>
+
+  <!-- Listado -->
+  <main class="max-w-7xl mx-auto px-6 py-20">
+
+    <div
+      id="propertiesGrid"
+      class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10"
+    ></div>
+
+    <div
+      id="emptyState"
+      class="hidden text-center py-20"
+    >
+      <i data-lucide="home" class="w-14 h-14 mx-auto text-gray-300 mb-4"></i>
+      <h3 class="text-xl font-semibold mb-1">
+        No hay propiedades disponibles
+      </h3>
+      <p class="text-gray-500">
+        Próximamente publicaremos nuevas oportunidades.
+      </p>
+    </div>
+
+  </main>
 
   <script src="../js/main.js"></script>
 </body>
