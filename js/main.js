@@ -64,12 +64,33 @@ document.addEventListener("DOMContentLoaded", () => {
       type: "Departamento",
       currency: "ARS",
       price: 450000,
-      location: "Centro Histórico",
+      location: "Zona Norte",
       beds: 2,
       baths: 1,
       sqm: 75,
       image:
         "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=800&q=80",
+    },
+        {
+      id: Date.now() + 2,
+      title: "Departamento lujoso 5 Ambientes",
+      operation: "Venta",
+      type: "Departamento",
+      currency: "ARS",
+      price: 750000,
+      location: "Zona Norte",
+      beds: 3,
+      baths: 1,
+      sqm: 105,
+      image:
+        <div style="position: relative; width: 100%; height: 0; padding-top: 100.0000%;
+ padding-bottom: 0; box-shadow: 0 2px 8px 0 rgba(63,69,81,0.16); margin-top: 1.6em; margin-bottom: 0.9em; overflow: hidden;
+ border-radius: 8px; will-change: transform;">
+  <iframe loading="lazy" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; border: none; padding: 0;margin: 0;"
+    src="https://www.canva.com/design/DAHGdLucpog/fe_droQ2TCneCw87rUTodQ/view?embed" allowfullscreen="allowfullscreen" allow="fullscreen">
+  </iframe>
+</div>
+<a href="https:&#x2F;&#x2F;www.canva.com&#x2F;design&#x2F;DAHGdLucpog&#x2F;fe_droQ2TCneCw87rUTodQ&#x2F;view?utm_content=DAHGdLucpog&amp;utm_campaign=designshare&amp;utm_medium=embeds&amp;utm_source=link" target="_blank" rel="noopener">Diseño</a> de Nahuel Gonzalez,
     },
   ];
 
