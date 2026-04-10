@@ -131,16 +131,22 @@
                     <form class="flex flex-col md:flex-row gap-3 md:gap-4 items-center">
                         <div class="w-full md:w-1/4 relative">
                             <i data-lucide="key" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-brand-gray"></i>
-                            <select class="w-full bg-brand-light rounded-xl pl-10 pr-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-green/20 appearance-none text-brand-dark cursor-pointer">
-                                <option value="">Operación</option>
-                                <option value="venta">Venta</option>
-                                <option value="alquiler">Alquiler</option>
+                            <select
+                              id="searchOperation"
+                              class="w-full bg-brand-light rounded-xl pl-10 pr-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-green/20"
+                            >
+                              <option value="">Operación</option>
+                              <option value="venta">Venta</option>
+                              <option value="alquiler">Alquiler</option>
                             </select>
                         </div>
                         
                         <div class="w-full md:w-1/4 relative">
                             <i data-lucide="home" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-brand-gray"></i>
-                            <select class="w-full bg-brand-light rounded-xl pl-10 pr-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-green/20 appearance-none text-brand-dark cursor-pointer">
+                            <select 
+                                <select id="searchType"
+                                class="w-full bg-brand-light rounded-xl pl-10 pr-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-green/20 appearance-none text-brand-dark cursor-pointer"
+                                >
                                 <option value="">Tipo de Inmueble</option>
                                 <option value="casa">Casa</option>
                                 <option value="ph">Ph</option>
@@ -155,7 +161,10 @@
 
                         <div class="w-full md:w-1/4 relative">
                             <i data-lucide="map-pin" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-brand-gray"></i>
-                            <select class="w-full bg-brand-light rounded-xl pl-10 pr-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-green/20 appearance-none text-brand-dark cursor-pointer">
+                            <select 
+                                <select id="searchLocation"
+                                class="w-full bg-brand-light rounded-xl pl-10 pr-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-green/20 appearance-none text-brand-dark cursor-pointer"
+                                >
                                 <option value="">Ubicación</option>
                                 <option value="centro">Centro</option>
                                 <option value="norte">Zona Norte</option>
