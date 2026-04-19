@@ -1,0 +1,19 @@
+{
+  "name": "gonzalez-inmuebles",
+  "version": "1.0.0",
+  "description": "Sitio web González Inmuebles",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --env-file=.env --watch server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "express": "^4.19.2",
+    "nodemailer": "^8.0.5"
+  }
+}

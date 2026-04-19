@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - González Inmuebles</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://widget.cloudinary.com/v2.0/global/all.js" type="text/javascript"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { 'brand-green': '#2D5A27', 'brand-dark': '#1a1a1a' },
+                    fontFamily: { 'montserrat': ['Montserrat', 'sans-serif'], 'inter': ['Inter', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3 { font-family: 'Montserrat', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #2D5A27; border-radius: 10px; }
+        #edit_modal { transition: opacity 0.2s ease; }
+        #edit_modal.hidden { pointer-events: none; }
+        @keyframes shimmer-slide {
+            0%   { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        .shimmer-bg {
+            background: linear-gradient(90deg, #e8e8e8 25%, #f4f4f4 50%, #e8e8e8 75%);
+            background-size: 200% 100%;
+            animation: shimmer-slide 1.4s ease-in-out infinite;
+        }
+        img.img-fade { opacity: 0; transition: opacity 0.45s ease; }
+        img.img-fade.img-loaded { opacity: 1; }
+    </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+
+    <!-- HEADER -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="bg-brand-green p-2 rounded-lg text-white">
+                    <i data-lucide="home" class="w-6 h-6"></i>
+                </div>
+                <span class="text-xl font-extrabold text-brand-dark tracking-tight uppercase">González <span class="text-brand-green">Inmuebles</span></span>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="index.html" class="text-sm font-bold text-gray-500 hover:text-brand-green transition flex items-center gap-2">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i> Volver a la Web
+                </a>
+                <button onclick="logout()" class="text-sm font-bold text-gray-400 hover:text-red-500 transition flex items-center gap-1">
+                    <i data-lucide="log-out" class="w-4 h-4"></i> Salir
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MODAL DE EDICIÓN -->
+    <div id="edit_modal" class="hidden fixed inset-0 z-50 flex items-start justify-center bg-black/60 overflow-y-auto py-8 px-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl my-auto">
+
+            <!-- Header modal -->
+            <div class="flex items-center justify-between px-8 py-5 border-b border-gray-100">
+                <div class="flex items-center gap-3">
+                    <div class="bg-brand-green/10 p-2 rounded-lg">
+                        <i data-lucide="pencil" class="w-5 h-5 text-brand-green"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold text-brand-dark">Editando propiedad</h2>
+                        <p id="modal_subtitle" class="text-xs text-gray-400 font-medium truncate max-w-xs"></p>
+                    </div>
+                </div>
+                <button onclick="closeModal()" class="p-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Cuerpo del modal -->
+            <div class="p-8 space-y-6">
+                <input type="hidden" id="m_id">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div class="md:col-span-2">
+                        <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">Título del Anuncio</label>
+                        <input type="text" id="m_t" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-green outline-none transition">
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">Operación</label>
+                        <select id="m_o" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-green outline-none font-semibold text-gray-700">
+                            <option>Venta</option><option>Alquiler</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">Tipo de Propiedad</label>
+                        <select id="m_ty" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-green outline-none font-semibold text-gray-700">
+                            <option>Casa</option><option>Departamento</option><option>PH</option><option>Galpón</option><option>Terreno</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">Moneda</label>
+                        <select id="m_cur" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-green outline-none font-semibold text-gray-700">
+                            <option>USD</option><option>ARS</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">Precio</label>
+                        <input type="number" id="m_pr" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-green outline-none font-bold">
+                    </div>
+                    <div class="md:col-span-2 relative">
+                        <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">Ubicación</label>
+                        <div class="relative">
+                            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4"></i>
+                            <input type="text" id="m_loc" autocomplete="off"
+                                class="w-full p-3 pl-11 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-green outline-none transition">
+                        </div>
+                        <div id="m_loc_results" class="absolute z-50 bg-white border border-gray-200 shadow-xl w-full mt-2 rounded-xl overflow-hidden hidden max-h-48 overflow-y-auto"></div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4 md:col-span-2">
+                        <div>
+                            <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">m² Totales</label>
+                            <input type="number" id="m_sqm" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none">
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">Ambientes</label>
+                            <input type="number" id="m_beds" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none">
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">Baños</label>
+                            <input type="number" id="m_baths" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none">
+                        </div>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">Descripción</label>
+                        <textarea id="m_de" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-brand-green h-28 resize-none"></textarea>
+                    </div>
+                </div>
+
+                <!-- Imágenes del modal con X para eliminar -->
+                <div>
+                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3 block">Fotos</label>
+                    <div id="m_preview_grid" class="flex flex-wrap gap-3 mb-4 min-h-[4rem]">
+                        <!-- Imágenes con botones X -->
+                    </div>
+                    <button id="m_btn_upload" type="button"
+                        class="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed border-gray-200 rounded-xl hover:border-brand-green hover:bg-green-50/50 transition text-sm text-gray-500 hover:text-brand-green font-semibold">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Agregar más fotos
+                    </button>
+                    <input type="hidden" id="m_imgs_hidden">
+                </div>
+            </div>
+
+            <!-- Footer modal -->
+            <div class="px-8 pb-8 flex gap-3">
+                <button onclick="closeModal()"
+                    class="flex-1 py-3 rounded-xl border border-gray-200 font-bold text-gray-500 hover:bg-gray-50 transition">
+                    Cancelar
+                </button>
+                <button onclick="saveModal()"
+                    class="flex-1 py-3 rounded-xl bg-brand-green text-white font-bold hover:opacity-90 transition shadow-lg shadow-green-100 flex items-center justify-center gap-2">
+                    <i data-lucide="save" class="w-4 h-4"></i> Guardar Cambios
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function logout() {
+            await fetch('/api/logout', { method: 'POST' });
+            window.location.href = '/login.html';
+        }
+    </script>
+
+    <!-- MAIN -->
+    <main class="max-w-7xl mx-auto px-6 py-12">
+        <div class="mb-10">
+            <h1 class="text-3xl font-extrabold text-brand-dark">Panel de Gestión</h1>
+            <p class="text-gray-500 font-medium">Cargá nuevas propiedades y editá las existentes desde la lista.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+            <!-- FORMULARIO CREAR -->
+            <div class="lg:col-span-8 space-y-8">
+
+                <form id="f_prop" class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+                    <div class="flex items-center gap-3 mb-8 pb-4 border-b border-gray-50">
+                        <i data-lucide="plus-circle" class="text-brand-green"></i>
+                        <h2 class="text-xl font-bold text-brand-dark">Nueva Propiedad</h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="md:col-span-2">
+                            <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">Título del Anuncio</label>
+                            <input type="text" id="t" placeholder="Ej: Depto 3 Ambientes con Cochera"
+                                class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-green outline-none transition" required>
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">Operación</label>
+                            <select id="o" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-green outline-none font-semibold text-gray-700">
+                                <option>Venta</option><option>Alquiler</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">Tipo de Propiedad</label>
+                            <select id="ty" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-green outline-none font-semibold text-gray-700">
+                                <option>Casa</option><option>Departamento</option><option>PH</option><option>Galpón</option><option>Terreno</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">Moneda</label>
+                            <select id="cur" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-green outline-none font-semibold text-gray-700">
+                                <option>USD</option><option>ARS</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">Precio</label>
+                            <input type="number" id="pr" placeholder="0"
+                                class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-green outline-none font-bold" required>
+                        </div>
+                        <div class="md:col-span-2 relative">
+                            <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">Ubicación Geográfica</label>
+                            <div class="relative">
+                                <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4"></i>
+                                <input type="text" id="loc" placeholder="Barrio, localidad o dirección..."
+                                    class="w-full p-3 pl-11 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-green outline-none transition"
+                                    required autocomplete="off">
+                            </div>
+                            <div id="loc_results" class="absolute z-50 bg-white border border-gray-200 shadow-xl w-full mt-2 rounded-xl overflow-hidden hidden max-h-48 overflow-y-auto"></div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-4 md:col-span-2">
+                            <div>
+                                <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">m² Totales</label>
+                                <input type="number" id="sqm" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none">
+                            </div>
+                            <div>
+                                <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">Ambientes</label>
+                                <input type="number" id="beds" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none">
+                            </div>
+                            <div>
+                                <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">Baños</label>
+                                <input type="number" id="baths" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none">
+                            </div>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">Descripción Detallada</label>
+                            <textarea id="de" placeholder="Escribí aquí las características destacadas..."
+                                class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-brand-green h-32 resize-none"></textarea>
+                        </div>
+                    </div>
+                    <input type="hidden" id="imgs_hidden">
+                </form>
+
+                <!-- IMÁGENES (crear) -->
+                <section class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+                    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-gray-50">
+                        <i data-lucide="image" class="text-brand-green"></i>
+                        <h2 class="text-xl font-bold text-brand-dark">Galería Multimedia</h2>
+                    </div>
+
+                    <button id="btn_upload" type="button"
+                        class="w-full py-10 border-2 border-dashed border-gray-200 rounded-2xl hover:border-brand-green hover:bg-green-50/50 transition-all flex flex-col items-center group">
+                        <div class="bg-brand-green text-white p-3 rounded-xl mb-3 group-hover:scale-110 transition-transform">
+                            <i data-lucide="plus" class="w-6 h-6"></i>
+                        </div>
+                        <span class="text-sm font-bold text-gray-600">Subir fotos a Cloudinary</span>
+                        <span class="text-xs text-gray-400 mt-1">Recomendado: imágenes horizontales</span>
+                    </button>
+
+                    <!-- Preview con botones X -->
+                    <div id="preview_grid" class="flex flex-wrap gap-3 mt-5"></div>
+
+                    <button type="button" onclick="submitProp()"
+                        class="mt-6 w-full bg-brand-green text-white py-4 rounded-xl font-bold text-lg hover:opacity-90 transition shadow-lg shadow-green-100 uppercase tracking-wider">
+                        Guardar y Sincronizar Propiedad
+                    </button>
+                </section>
+            </div>
+
+            <!-- SIDEBAR: LISTA -->
+            <div class="lg:col-span-4 space-y-6">
+                <div class="bg-brand-dark rounded-2xl p-6 text-white sticky top-24 shadow-xl">
+                    <div class="flex items-center gap-3 mb-5">
+                        <div class="bg-brand-green p-2 rounded-lg">
+                            <i data-lucide="list" class="w-5 h-5"></i>
+                        </div>
+                        <h2 class="text-base font-bold uppercase tracking-tight">Propiedades</h2>
+                    </div>
+
+                    <!-- Buscador -->
+                    <div class="relative mb-4">
+                        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                        <input id="panel_search" type="text" placeholder="Buscar por título..."
+                            oninput="renderList()"
+                            class="w-full pl-9 pr-3 py-2.5 bg-white/10 border border-white/10 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:border-brand-green/50">
+                    </div>
+
+                    <div class="flex justify-between items-center px-1 mb-3">
+                        <span id="lista_count" class="text-[10px] font-black text-gray-500 uppercase tracking-widest"></span>
+                        <button onclick="descargarCSV()" class="text-[10px] text-gray-500 hover:text-brand-green flex items-center gap-1">
+                            <i data-lucide="download" class="w-3 h-3"></i> CSV
+                        </button>
+                    </div>
+
+                    <div id="lista_local" class="space-y-2 max-h-[500px] overflow-y-auto custom-scrollbar pr-1">
+                        <p class="text-xs text-gray-500 text-center py-4">Cargando...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        lucide.createIcons();
+
+        /* ─── ESTADO GLOBAL ─── */
+        let allProperties = [];
+        let createImgs = [];   // imágenes del formulario de creación
+        let editImgs   = [];   // imágenes del modal de edición
+
+        /* ─── SYNC ─── */
+        async function syncToSheet(property) {
+            try {
+                const r = await fetch('/api/sync-property', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(property)
+                });
+                return (await r.json()).ok === true;
+            } catch { return false; }
+        }
+
+        /* ─── CLOUDINARY: dos instancias independientes ─── */
+        const wCreate = cloudinary.createUploadWidget(
+            { cloudName: 'dzyiwuftf', uploadPreset: 'ml_default', apiKey: null },
+            (err, res) => {
+                if (!err && res?.event === 'success') {
+                    createImgs.push(res.info.secure_url);
+                    syncHiddenCreate();
+                    renderCreatePreviews();
+                }
+            }
+        );
+        const wEdit = cloudinary.createUploadWidget(
+            { cloudName: 'dzyiwuftf', uploadPreset: 'ml_default', apiKey: null },
+            (err, res) => {
+                if (!err && res?.event === 'success') {
+                    editImgs.push(res.info.secure_url);
+                    syncHiddenEdit();
+                    renderEditPreviews();
+                }
+            }
+        );
+        document.getElementById('btn_upload').onclick = () => wCreate.open();
+        document.getElementById('m_btn_upload').onclick = () => wEdit.open();
+
+        /* ─── RENDER DE IMÁGENES CON X Y PORTADA ─── */
+        function imgCard(url, i, isFirst, removeFn, coverFn) {
+            return `
+            <div class="relative group flex-shrink-0 rounded-xl overflow-hidden shimmer-bg">
+                <img src="${url}" class="h-24 w-32 object-cover rounded-xl shadow-sm border-2 img-fade ${isFirst ? 'border-brand-green' : 'border-white'}" onload="this.classList.add('img-loaded')">
+                ${isFirst ? '<span class="absolute bottom-1 left-1 bg-brand-green text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none">PORTADA</span>' : ''}
+                <div class="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition">
+                    ${!isFirst ? `<button onclick="${coverFn}(${i})" type="button" title="Usar como portada"
+                        class="bg-brand-green text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shadow">★</button>` : ''}
+                    <button onclick="${removeFn}(${i})" type="button" title="Eliminar"
+                        class="bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shadow">✕</button>
+                </div>
+            </div>`;
+        }
+
+        function renderCreatePreviews() {
+            document.getElementById('preview_grid').innerHTML =
+                createImgs.map((url, i) => imgCard(url, i, i === 0, 'removeCreateImg', 'setCoverCreate')).join('');
+        }
+        function removeCreateImg(idx) { createImgs.splice(idx, 1); syncHiddenCreate(); renderCreatePreviews(); }
+        function setCoverCreate(idx) { createImgs.unshift(createImgs.splice(idx, 1)[0]); syncHiddenCreate(); renderCreatePreviews(); }
+        function syncHiddenCreate() { document.getElementById('imgs_hidden').value = createImgs.join(';'); }
+
+        function renderEditPreviews() {
+            document.getElementById('m_preview_grid').innerHTML =
+                editImgs.map((url, i) => imgCard(url, i, i === 0, 'removeEditImg', 'setCoverEdit')).join('');
+            document.getElementById('m_imgs_hidden').value = editImgs.join(';');
+        }
+        function removeEditImg(idx) { editImgs.splice(idx, 1); renderEditPreviews(); }
+        function setCoverEdit(idx) { editImgs.unshift(editImgs.splice(idx, 1)[0]); renderEditPreviews(); }
+
+        /* ─── UBICACIÓN (formulario crear) ─── */
+        let timer;
+        document.getElementById('loc').addEventListener('input', e => {
+            clearTimeout(timer);
+            const val = e.target.value;
+            const box = document.getElementById('loc_results');
+            if (val.length < 3) return box.classList.add('hidden');
+            timer = setTimeout(async () => {
+                const data = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}&countrycodes=ar&limit=5`).then(r => r.json());
+                box.innerHTML = data.map(i => {
+                    const clean = i.display_name.replace(/'/g, '');
+                    return `<div class="p-3 hover:bg-green-50 cursor-pointer border-b border-gray-50 text-xs font-semibold text-gray-600 flex gap-2 items-center" onclick="setLoc('${clean}')"><i data-lucide="map-pin" class="w-3 h-3"></i>${i.display_name}</div>`;
+                }).join('');
+                box.classList.remove('hidden');
+                lucide.createIcons();
+            }, 300);
+        });
+        function setLoc(n) { document.getElementById('loc').value = n; document.getElementById('loc_results').classList.add('hidden'); }
+
+        /* ─── UBICACIÓN (modal edición) ─── */
+        let timerM;
+        document.getElementById('m_loc').addEventListener('input', e => {
+            clearTimeout(timerM);
+            const val = e.target.value;
+            const box = document.getElementById('m_loc_results');
+            if (val.length < 3) return box.classList.add('hidden');
+            timerM = setTimeout(async () => {
+                const data = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}&countrycodes=ar&limit=5`).then(r => r.json());
+                box.innerHTML = data.map(i => {
+                    const clean = i.display_name.replace(/'/g, '');
+                    return `<div class="p-3 hover:bg-green-50 cursor-pointer border-b border-gray-50 text-xs font-semibold text-gray-600 flex gap-2 items-center" onclick="setLocM('${clean}')"><i data-lucide="map-pin" class="w-3 h-3"></i>${i.display_name}</div>`;
+                }).join('');
+                box.classList.remove('hidden');
+                lucide.createIcons();
+            }, 300);
+        });
+        function setLocM(n) { document.getElementById('m_loc').value = n; document.getElementById('m_loc_results').classList.add('hidden'); }
+
+        /* ─── CARGAR PROPIEDADES ─── */
+        async function loadAllProperties() {
+            let fromAPI = [];
+            try {
+                const r = await fetch('/api/properties');
+                if (r.ok) fromAPI = await r.json();
+            } catch (_) {}
+            const fromLocal = JSON.parse(localStorage.getItem('properties_db') || '[]');
+            const merged = [...fromLocal];
+            fromAPI.forEach(p => {
+                if (!merged.find(x => String(x.id) === String(p.id))) merged.push(p);
+            });
+            allProperties = merged;
+            renderList();
+        }
+
+        /* ─── RENDER LISTA SIDEBAR ─── */
+        function renderList() {
+            const query = (document.getElementById('panel_search')?.value || '').toLowerCase();
+            const filtered = allProperties.filter(p => !query || (p.title || '').toLowerCase().includes(query));
+            document.getElementById('lista_count').textContent = `${filtered.length} propiedad${filtered.length !== 1 ? 'es' : ''}`;
+
+            if (!filtered.length) {
+                document.getElementById('lista_local').innerHTML = '<p class="text-xs text-gray-500 text-center py-6">Sin resultados.</p>';
+                return;
+            }
+            document.getElementById('lista_local').innerHTML = filtered.map(p => {
+                const price = p.price ? `${p.currency || 'USD'} ${Number(p.price).toLocaleString('es-AR')}` : '';
+                const thumb = Array.isArray(p.images) ? p.images[0] : (p.images || '').split(';')[0];
+                return `
+                <div class="group flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition">
+                    ${thumb
+                        ? `<div class="w-12 h-10 rounded-lg overflow-hidden shimmer-bg flex-shrink-0"><img src="${thumb}" class="w-full h-full object-cover img-fade" onload="this.classList.add('img-loaded')"></div>`
+                        : `<div class="w-12 h-10 bg-white/10 rounded-lg flex-shrink-0 flex items-center justify-center"><i data-lucide="home" class="w-4 h-4 text-gray-500"></i></div>`
+                    }
+                    <div class="flex-1 min-w-0">
+                        <p class="text-xs font-bold text-gray-100 truncate">${p.title}</p>
+                        <p class="text-[10px] text-gray-400 mt-0.5">${p.operation || ''} · ${price}</p>
+                    </div>
+                    <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
+                        <button onclick="openModal('${p.id}')" title="Editar"
+                            class="p-1.5 rounded-lg hover:bg-brand-green/20 text-gray-500 hover:text-brand-green">
+                            <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <button onclick="borrar('${p.id}')" title="Eliminar"
+                            class="p-1.5 rounded-lg hover:bg-red-500/20 text-gray-500 hover:text-red-400">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+                </div>`;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        /* ─── GUARDAR (crear) ─── */
+        async function submitProp() {
+            const d = {
+                id: Date.now(),
+                title: document.getElementById('t').value,
+                operation: document.getElementById('o').value,
+                type: document.getElementById('ty').value,
+                currency: document.getElementById('cur').value,
+                price: Number(document.getElementById('pr').value) || 0,
+                location: document.getElementById('loc').value,
+                sqm: Number(document.getElementById('sqm').value) || 0,
+                beds: Number(document.getElementById('beds').value) || 0,
+                baths: Number(document.getElementById('baths').value) || 0,
+                description: document.getElementById('de').value,
+                images: [...createImgs],
+                status: 'Publicada'
+            };
+            if (!d.title || !d.price || !d.location) return alert('Completá los campos obligatorios.');
+
+            const s = JSON.parse(localStorage.getItem('properties_db') || '[]');
+            s.unshift(d);
+            localStorage.setItem('properties_db', JSON.stringify(s));
+
+            document.getElementById('f_prop').reset();
+            createImgs = [];
+            syncHiddenCreate();
+            renderCreatePreviews();
+
+            await loadAllProperties();
+            fetch('/api/invalidate-cache', { method: 'POST' }).catch(() => {});
+            const synced = await syncToSheet(d);
+            alert(synced
+                ? '✓ Propiedad guardada y sincronizada con Google Sheets.'
+                : '✓ Propiedad guardada. (Google Sheets no configurado o no disponible)');
+        }
+
+        /* ─── MODAL EDICIÓN ─── */
+        function openModal(id) {
+            const p = allProperties.find(x => String(x.id) === String(id));
+            if (!p) return;
+
+            document.getElementById('m_id').value   = p.id;
+            document.getElementById('m_t').value    = p.title || '';
+            document.getElementById('m_o').value    = p.operation || 'Venta';
+            document.getElementById('m_ty').value   = p.type || 'Casa';
+            document.getElementById('m_cur').value  = p.currency || 'USD';
+            document.getElementById('m_pr').value   = p.price || '';
+            document.getElementById('m_loc').value  = p.location || '';
+            document.getElementById('m_sqm').value  = p.sqm || '';
+            document.getElementById('m_beds').value = p.beds || '';
+            document.getElementById('m_baths').value = p.baths || '';
+            document.getElementById('m_de').value   = p.description || '';
+            document.getElementById('modal_subtitle').textContent = p.title;
+            document.getElementById('m_loc_results').classList.add('hidden');
+
+            editImgs = Array.isArray(p.images)
+                ? [...p.images]
+                : (p.images || '').split(';').filter(Boolean);
+            renderEditPreviews();
+
+            const modal = document.getElementById('edit_modal');
+            modal.classList.remove('hidden');
+            modal.scrollTop = 0;
+            lucide.createIcons();
+        }
+
+        function closeModal() {
+            document.getElementById('edit_modal').classList.add('hidden');
+            editImgs = [];
+        }
+
+        // Cerrar modal al hacer clic en el backdrop
+        document.getElementById('edit_modal').addEventListener('click', e => {
+            if (e.target === document.getElementById('edit_modal')) closeModal();
+        });
+
+        async function saveModal() {
+            const id = document.getElementById('m_id').value;
+            const d = {
+                id,
+                title: document.getElementById('m_t').value,
+                operation: document.getElementById('m_o').value,
+                type: document.getElementById('m_ty').value,
+                currency: document.getElementById('m_cur').value,
+                price: Number(document.getElementById('m_pr').value) || 0,
+                location: document.getElementById('m_loc').value,
+                sqm: Number(document.getElementById('m_sqm').value) || 0,
+                beds: Number(document.getElementById('m_beds').value) || 0,
+                baths: Number(document.getElementById('m_baths').value) || 0,
+                description: document.getElementById('m_de').value,
+                images: [...editImgs],
+                status: 'Publicada'
+            };
+            if (!d.title || !d.price || !d.location) return alert('Completá los campos obligatorios.');
+
+            let s = JSON.parse(localStorage.getItem('properties_db') || '[]');
+            const idx = s.findIndex(x => String(x.id) === String(id));
+            if (idx !== -1) s[idx] = d; else s.unshift(d);
+            localStorage.setItem('properties_db', JSON.stringify(s));
+
+            closeModal();
+            await loadAllProperties();
+            fetch('/api/invalidate-cache', { method: 'POST' }).catch(() => {});
+            const synced = await syncToSheet(d);
+            alert(synced
+                ? '✓ Cambios guardados y sincronizados con Google Sheets.'
+                : '✓ Cambios guardados. (Google Sheets no configurado o no disponible)');
+        }
+
+        /* ─── BORRAR ─── */
+        function borrar(id) {
+            if (!confirm('¿Eliminás esta propiedad?')) return;
+            let s = JSON.parse(localStorage.getItem('properties_db') || '[]');
+            s = s.filter(x => String(x.id) !== String(id));
+            localStorage.setItem('properties_db', JSON.stringify(s));
+            allProperties = allProperties.filter(x => String(x.id) !== String(id));
+            renderList();
+            fetch('/api/invalidate-cache', { method: 'POST' }).catch(() => {});
+        }
+
+        /* ─── CSV ─── */
+        function descargarCSV() {
+            let csv = 'id,title,operation,type,currency,price,location,beds,baths,sqm,description,images,status\n';
+            allProperties.forEach(p => {
+                const imgs = Array.isArray(p.images) ? p.images.join(';') : (p.images || '');
+                csv += [p.id, `"${p.title}"`, p.operation, p.type, p.currency, p.price, `"${p.location}"`, p.beds, p.baths, p.sqm, `"${p.description || ''}"`, `"${imgs}"`, p.status || 'Publicada'].join(',') + '\n';
+            });
+            const link = document.createElement('a');
+            link.setAttribute('href', URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' })));
+            link.setAttribute('download', 'inmobiliaria_gonzalez.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        /* ─── INIT ─── */
+        loadAllProperties();
+    </script>
+</body>
+</html>

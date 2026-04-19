@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle de Propiedad - González Inmuebles</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            green: '#1B4332',
+                            greenLight: '#2D6A4F',
+                            light: '#F8F9FA',
+                            dark: '#212529',
+                            gray: '#6C757D'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        heading: ['Montserrat', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .line-clamp-4 { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+        @keyframes shimmer-slide {
+            0%   { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        .shimmer-bg {
+            background: linear-gradient(90deg, #e8e8e8 25%, #f4f4f4 50%, #e8e8e8 75%);
+            background-size: 200% 100%;
+            animation: shimmer-slide 1.4s ease-in-out infinite;
+        }
+        img.img-fade { opacity: 0; transition: opacity 0.45s ease; }
+        img.img-fade.img-loaded { opacity: 1; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <header class="bg-white border-b sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center gap-3">
+            <a href="../index.html" class="flex items-center gap-2 text-brand-green font-bold text-lg shrink-0">
+                <i data-lucide="building-2" class="w-5 h-5"></i>
+                <span class="hidden sm:inline">González Inmuebles</span>
+                <span class="sm:hidden">González</span>
+            </a>
+            <!-- Desktop nav -->
+            <nav class="hidden md:flex items-center gap-6 text-sm font-medium">
+                <a href="../index.html" class="hover:text-brand-green">Inicio</a>
+                <a href="properties.html" class="text-brand-green font-bold">Propiedades</a>
+                <a href="tasacion.html" class="hover:text-brand-green">Tasación</a>
+            </nav>
+            <a href="properties.html" class="hidden md:flex text-sm font-medium text-brand-green items-center gap-1 shrink-0">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i> Volver al listado
+            </a>
+            <!-- Mobile: back + hamburger -->
+            <div class="flex md:hidden items-center gap-2">
+                <a href="properties.html" class="text-sm font-medium text-brand-green flex items-center gap-1">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i> Volver
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main id="property-content" class="max-w-7xl mx-auto px-4 py-8">
+        <div class="animate-pulse flex flex-col gap-4">
+            <div class="h-96 bg-gray-200 rounded-2xl w-full"></div>
+            <div class="h-8 bg-gray-200 rounded w-1/3"></div>
+            <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+        </div>
+    </main>
+
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            lucide.createIcons();
+
+            const params = new URLSearchParams(window.location.search);
+            const propId = params.get('id');
+
+            if (!propId) {
+                window.location.href = '../index.html';
+                return;
+            }
+
+            // Esperar a que main.js exponga window.loadProperties
+            let attempts = 0;
+            while (!window.loadProperties && attempts < 20) {
+                await new Promise(r => setTimeout(r, 50));
+                attempts++;
+            }
+
+            if (!window.loadProperties) {
+                document.getElementById('property-content').innerHTML = `<div class="text-center py-20"><h2 class="text-2xl font-bold">Error al cargar propiedades</h2><a href="../index.html" class="text-brand-green underline">Volver al inicio</a></div>`;
+                return;
+            }
+
+            const properties = await window.loadProperties();
+            const prop = properties.find(p => String(p.id) === String(propId));
+
+            if (!prop) {
+                document.getElementById('property-content').innerHTML = `
+                    <div class="text-center py-20">
+                        <h2 class="text-2xl font-bold">Propiedad no encontrada</h2>
+                        <a href="../index.html" class="text-brand-green underline">Volver al inicio</a>
+                    </div>
+                `;
+                return;
+            }
+
+            // Normalizar imágenes: siempre trabajar con array
+            const images = Array.isArray(prop.images) && prop.images.length > 0
+                ? prop.images
+                : (prop.images ? String(prop.images).split(';').filter(Boolean) : ['https://via.placeholder.com/800x600?text=Sin+Imagen']);
+
+            // Funciones del carrusel
+            let _idx = 0;
+            window.changeDetailImg = (idx) => {
+                _idx = ((idx % images.length) + images.length) % images.length;
+                const mainEl = document.getElementById('d-main-img');
+                mainEl.classList.remove('img-loaded');
+                mainEl.src = images[_idx];
+                const counter = document.getElementById('d-counter');
+                if (counter) counter.textContent = `${_idx + 1} / ${images.length}`;
+                document.querySelectorAll('.d-thumb').forEach((t, i) => {
+                    t.classList.toggle('ring-2', i === _idx);
+                    t.classList.toggle('ring-brand-green', i === _idx);
+                    t.classList.toggle('opacity-50', i !== _idx);
+                    if (i === _idx) t.classList.remove('opacity-60');
+                    else if (!t.classList.contains('ring-2')) t.classList.add('opacity-60');
+                });
+            };
+            window.prevDetailImg = () => window.changeDetailImg(_idx - 1);
+            window.nextDetailImg = () => window.changeDetailImg(_idx + 1);
+            window.toggleDescDetail = () => {
+                const el = document.getElementById('desc-body');
+                const btn = document.getElementById('desc-btn');
+                el.classList.toggle('line-clamp-4');
+                btn.textContent = el.classList.contains('line-clamp-4') ? '+ Ver más' : '− Ver menos';
+            };
+
+            window.showAllThumbs = () => {
+                document.getElementById('showMoreThumbs')?.remove();
+                const extra = document.getElementById('thumbsExtra');
+                if (extra) { extra.classList.remove('hidden'); extra.classList.add('flex'); }
+            };
+            window.showAllMobileThumbs = () => {
+                document.getElementById('showMoreMobileThumbs')?.remove();
+                const extra = document.getElementById('mobileThumbsExtra');
+                if (extra) { extra.classList.remove('hidden'); extra.classList.add('flex'); }
+            };
+
+            // Swipe en mobile
+            let _touchX = null;
+            document.addEventListener('touchstart', e => { _touchX = e.touches[0].clientX; });
+            document.addEventListener('touchend', e => {
+                if (_touchX === null) return;
+                const diff = _touchX - e.changedTouches[0].clientX;
+                if (Math.abs(diff) > 50) diff > 0 ? window.nextDetailImg() : window.prevDetailImg();
+                _touchX = null;
+            });
+
+            document.getElementById('property-content').innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Galería y Info Principal -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <!-- Galería con carrusel -->
+                        <div>
+                            <div class="relative shimmer-bg rounded-2xl overflow-hidden">
+                                <img id="d-main-img" src="${images[0]}" class="w-full h-56 sm:h-80 md:h-[460px] object-cover rounded-2xl shadow-lg select-none img-fade" onload="this.classList.add('img-loaded')">
+                                ${images.length > 1 ? `
+                                    <button onclick="prevDetailImg()" class="absolute left-3 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-2 rounded-full shadow-lg transition-all">
+                                        <i data-lucide="chevron-left" class="w-6 h-6 text-gray-800"></i>
+                                    </button>
+                                    <button onclick="nextDetailImg()" class="absolute right-3 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-2 rounded-full shadow-lg transition-all">
+                                        <i data-lucide="chevron-right" class="w-6 h-6 text-gray-800"></i>
+                                    </button>
+                                    <span class="absolute bottom-3 right-3 bg-black/60 text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5">
+                                        <i data-lucide="camera" class="w-3 h-3"></i>
+                                        <span id="d-counter">1 / ${images.length}</span>
+                                    </span>
+                                ` : ''}
+                            </div>
+                            ${images.length > 1 ? `
+                                <!-- Thumbnails mobile: 3 visibles, tap para expandir -->
+                                <div class="block md:hidden mt-3">
+                                    <div class="flex gap-2 overflow-x-auto pb-1">
+                                        ${images.slice(0, 3).map((img, i) => `
+                                            <div class="w-20 h-16 rounded-lg overflow-hidden shimmer-bg flex-shrink-0">
+                                            <img src="${img}" onclick="changeDetailImg(${i})"
+                                                 class="d-thumb w-full h-full object-cover cursor-pointer transition-all img-fade ${i === 0 ? 'ring-2 ring-brand-green' : 'opacity-60'}" onload="this.classList.add('img-loaded')">
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                    ${images.length > 3 ? `
+                                        <button id="showMoreMobileThumbs" onclick="showAllMobileThumbs()"
+                                                class="mt-2 w-full py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-semibold flex items-center justify-center gap-2 transition-all">
+                                            <i data-lucide="images" class="w-4 h-4"></i> Ver las ${images.length - 3} fotos restantes
+                                        </button>
+                                        <div id="mobileThumbsExtra" class="hidden flex gap-2 mt-2 flex-wrap">
+                                            ${images.slice(3).map((img, i) => `
+                                                <div class="w-20 h-16 rounded-lg overflow-hidden shimmer-bg flex-shrink-0">
+                                                <img src="${img}" onclick="changeDetailImg(${i + 3})"
+                                                     class="d-thumb w-full h-full object-cover cursor-pointer opacity-60 transition-all img-fade" onload="this.classList.add('img-loaded')">
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                                <!-- Thumbnails desktop: 5 visibles, colapsar el resto -->
+                                <div id="thumbsArea" class="hidden md:block">
+                                    <div id="thumbsGrid" class="flex gap-2 mt-3 flex-wrap">
+                                        ${images.slice(0, 5).map((img, i) => `
+                                            <div class="w-20 h-16 rounded-lg overflow-hidden shimmer-bg flex-shrink-0">
+                                            <img src="${img}" onclick="changeDetailImg(${i})"
+                                                 class="d-thumb w-full h-full object-cover cursor-pointer transition-all img-fade ${i === 0 ? 'ring-2 ring-brand-green' : 'opacity-60 hover:opacity-100'}" onload="this.classList.add('img-loaded')">
+                                            </div>
+                                        `).join('')}
+                                        ${images.length > 5 ? `
+                                            <button id="showMoreThumbs" onclick="showAllThumbs()" class="w-20 h-16 rounded-lg bg-gray-100 hover:bg-gray-200 flex flex-col items-center justify-center text-gray-600 font-semibold text-xs transition-all flex-shrink-0">
+                                                <i data-lucide="plus" class="w-4 h-4 mb-0.5"></i>
+                                                ${images.length - 5} más
+                                            </button>
+                                        ` : ''}
+                                    </div>
+                                    <div id="thumbsExtra" class="hidden flex gap-2 mt-2 flex-wrap">
+                                        ${images.slice(5).map((img, i) => `
+                                            <div class="w-20 h-16 rounded-lg overflow-hidden shimmer-bg flex-shrink-0">
+                                            <img src="${img}" onclick="changeDetailImg(${i + 5})"
+                                                 class="d-thumb w-full h-full object-cover cursor-pointer opacity-60 hover:opacity-100 transition-all img-fade" onload="this.classList.add('img-loaded')">
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <!-- Detalles -->
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <span class="bg-brand-green/10 text-brand-green px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                                        ${prop.type} en ${prop.operation}
+                                    </span>
+                                    <h1 class="text-3xl font-bold text-gray-900 mt-2">${prop.title}</h1>
+                                    <p class="text-gray-500 flex items-center gap-1 mt-1">
+                                        <i data-lucide="map-pin" class="w-4 h-4"></i> ${prop.location}
+                                    </p>
+                                </div>
+                                <div class="text-right shrink-0 ml-4">
+                                    <p class="text-3xl font-bold text-brand-green">${prop.currency} ${Number(prop.price).toLocaleString('es-AR')}</p>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-wrap gap-6 py-6 border-y border-gray-100">
+                                <div class="text-center min-w-[60px]">
+                                    <i data-lucide="maximize" class="w-5 h-5 mx-auto text-gray-400"></i>
+                                    <p class="text-sm font-bold mt-1">${prop.sqm || 0} m²</p>
+                                    <p class="text-[10px] text-gray-400 uppercase">Totales</p>
+                                </div>
+                                ${prop.sqmCovered ? `<div class="text-center min-w-[60px]">
+                                    <i data-lucide="layout" class="w-5 h-5 mx-auto text-gray-400"></i>
+                                    <p class="text-sm font-bold mt-1">${prop.sqmCovered} m²</p>
+                                    <p class="text-[10px] text-gray-400 uppercase">Cubiertos</p>
+                                </div>` : ''}
+                                ${prop.sqmLand ? `<div class="text-center min-w-[60px]">
+                                    <i data-lucide="trees" class="w-5 h-5 mx-auto text-gray-400"></i>
+                                    <p class="text-sm font-bold mt-1">${prop.sqmLand} m²</p>
+                                    <p class="text-[10px] text-gray-400 uppercase">Terreno</p>
+                                </div>` : ''}
+                                <div class="text-center min-w-[60px]">
+                                    <i data-lucide="bed" class="w-5 h-5 mx-auto text-gray-400"></i>
+                                    <p class="text-sm font-bold mt-1">${prop.beds || 0}</p>
+                                    <p class="text-[10px] text-gray-400 uppercase">Amb.</p>
+                                </div>
+                                <div class="text-center min-w-[60px]">
+                                    <i data-lucide="bath" class="w-5 h-5 mx-auto text-gray-400"></i>
+                                    <p class="text-sm font-bold mt-1">${prop.baths || 0}</p>
+                                    <p class="text-[10px] text-gray-400 uppercase">Baños</p>
+                                </div>
+                                ${prop.antiguedad ? `<div class="text-center min-w-[60px]">
+                                    <i data-lucide="clock" class="w-5 h-5 mx-auto text-gray-400"></i>
+                                    <p class="text-sm font-bold mt-1">${prop.antiguedad}</p>
+                                    <p class="text-[10px] text-gray-400 uppercase">Antigüedad</p>
+                                </div>` : ''}
+                            </div>
+
+                            <div class="mt-6">
+                                <h3 class="font-bold text-gray-900 mb-3">Descripción</h3>
+                                ${prop.description
+                                    ? `<p id="desc-body" class="text-gray-600 leading-relaxed line-clamp-4">${prop.description}</p>
+                                       <button id="desc-btn" onclick="toggleDescDetail()" class="text-brand-green font-semibold text-sm mt-2 hover:underline">+ Ver más</button>`
+                                    : '<p class="text-gray-400 italic text-sm">Sin descripción disponible.</p>'}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sidebar de Contacto -->
+                    <div class="lg:col-span-1">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 lg:sticky lg:top-24">
+                            <h3 class="font-bold text-xl mb-4">Consultar por esta propiedad</h3>
+                            <form id="detailContactForm" class="space-y-4">
+                                <input type="text" id="dcName" placeholder="Nombre y Apellido" required class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-brand-green">
+                                <input type="email" id="dcEmail" placeholder="Tu Email" required class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-brand-green">
+                                <input type="tel" id="dcPhone" placeholder="Tu Teléfono" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-brand-green">
+                                <textarea id="dcMessage" placeholder="Hola, me interesa esta propiedad..." class="w-full p-3 border rounded-lg h-32 outline-none focus:ring-2 focus:ring-brand-green"></textarea>
+                                <div id="dcSuccess" class="hidden bg-green-50 text-green-800 p-3 rounded-lg border border-green-200 text-sm font-medium">
+                                    ✓ Consulta enviada. Un agente te contactará pronto.
+                                </div>
+                                <button type="submit" class="w-full bg-brand-green text-white py-4 rounded-xl font-bold hover:opacity-90 transition shadow-lg shadow-green-100">
+                                    Enviar Consulta
+                                </button>
+                                <p class="text-xs text-gray-400 text-center">Al enviar aceptás nuestros Términos y Condiciones.</p>
+                            </form>
+                            <div class="mt-6 flex flex-col gap-3">
+                                <a href="https://wa.me/5491175259500?text=Hola%2C%20me%20interesa%20la%20propiedad%3A%20${encodeURIComponent(prop.title)}" target="_blank" class="flex items-center justify-center gap-2 text-green-600 font-bold p-3 border-2 border-green-600 rounded-xl hover:bg-green-50 transition">
+                                    <i data-lucide="message-circle"></i> WhatsApp
+                                </a>
+                                <a href="tel:+5491175259500" class="flex items-center justify-center gap-2 text-blue-600 font-bold p-3 border-2 border-blue-600 rounded-xl hover:bg-blue-50 transition">
+                                    <i data-lucide="phone"></i> Llamar
+                                </a>
+                                <a href="mailto:info@gonzalezinmuebles.com.ar?subject=Consulta%20por%20propiedad%3A%20${encodeURIComponent(prop.title)}" class="flex items-center justify-center gap-2 text-gray-600 font-bold p-3 border-2 border-gray-300 rounded-xl hover:bg-gray-50 transition">
+                                    <i data-lucide="mail"></i> Email
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+
+            // Handler del formulario de contacto de la ficha
+            const detailForm = document.getElementById('detailContactForm');
+            if (detailForm) {
+                detailForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const lead = {
+                        fecha: new Date().toLocaleString('es-AR'),
+                        nombre: document.getElementById('dcName').value,
+                        email: document.getElementById('dcEmail').value,
+                        telefono: document.getElementById('dcPhone').value,
+                        mensaje: document.getElementById('dcMessage').value,
+                        propiedad: prop.title,
+                        propiedadId: prop.id
+                    };
+                    // Guardar en localStorage para que el admin las vea (ADM-203)
+                    const consultas = JSON.parse(localStorage.getItem('consultas_db') || '[]');
+                    consultas.unshift(lead);
+                    localStorage.setItem('consultas_db', JSON.stringify(consultas));
+
+                    detailForm.reset();
+                    document.getElementById('dcSuccess').classList.remove('hidden');
+                    setTimeout(() => document.getElementById('dcSuccess').classList.add('hidden'), 6000);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
