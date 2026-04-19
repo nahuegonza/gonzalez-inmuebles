@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — González Inmuebles</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gray-50 flex items-center justify-center">
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 w-full max-w-sm">
+    <h1 class="text-xl font-bold text-gray-800 mb-6 text-center">Panel Administrativo</h1>
+
+    <form id="loginForm" class="space-y-4">
+      <input
+        id="password"
+        type="password"
+        placeholder="Contraseña"
+        required
+        class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 text-gray-800"
+      >
+      <p id="errorMsg" class="hidden text-red-500 text-sm text-center"></p>
+      <button
+        type="submit"
+        id="submitBtn"
+        class="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition-colors"
+      >
+        Ingresar
+      </button>
+    </form>
+  </div>
+
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      const err = document.getElementById('errorMsg');
+      btn.disabled = true;
+      btn.textContent = 'Verificando...';
+      err.classList.add('hidden');
+
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: document.getElementById('password').value })
+      });
+
+      if (res.ok) {
+        window.location.href = '/panel.html';
+      } else {
+        err.textContent = 'Contraseña incorrecta';
+        err.classList.remove('hidden');
+        btn.disabled = false;
+        btn.textContent = 'Ingresar';
+      }
+    });
+  </script>
+</body>
+</html>
