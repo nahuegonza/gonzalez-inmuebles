@@ -499,10 +499,6 @@ document.addEventListener("DOMContentLoaded", () => {
         ? "bg-brand-green text-white"
         : "bg-white text-brand-dark";
 
-      const aiString = encodeURIComponent(
-        `${prop.title} en ${prop.location}, ${prop.currency} ${formattedPrice}, ${prop.beds} hab, ${prop.baths} baños, ${prop.sqm} m²`
-      );
-
       // Usar la primera imagen o un placeholder
       const mainImage = prop.images && prop.images.length > 0 ? prop.images[0] : 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80';
       const extraImagesCount = prop.images && prop.images.length > 1 ? prop.images.length - 1 : 0;
@@ -535,12 +531,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 <i data-lucide="map-pin" class="w-4 h-4"></i> ${prop.location}
               </p>
             </div>
-
-            <button
-              class="mt-4 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-brand-green font-semibold"
-              onclick="event.stopPropagation(); generatePropertyStory(decodeURIComponent('${aiString}'))">
-              ✨ Imaginá tu vida acá
-            </button>
           </div>
         </article>
       `;
@@ -645,13 +635,10 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                     </div>
                     
-                    <div class="flex flex-col md:flex-row gap-4">
-                        <a href="https://wa.me/5491175259500?text=Hola! Me interesa la propiedad: ${prop.title}" target="_blank" class="flex-1 bg-brand-green text-white text-center py-4 rounded-2xl font-bold hover:bg-brand-greenLight transition-all flex items-center justify-center gap-2">
+                    <div class="flex gap-4">
+                        <a href="https://wa.me/5491175259500?text=Hola! Me interesa la propiedad: ${prop.title}" target="_blank" class="w-full bg-brand-green text-white text-center py-4 rounded-2xl font-bold hover:bg-brand-greenLight transition-all flex items-center justify-center gap-2">
                             <i data-lucide="message-circle" class="w-5 h-5"></i> Consultar por WhatsApp
                         </a>
-                        <button onclick="generatePropertyStory('${prop.title} en ${prop.location}')" class="flex-1 border-2 border-brand-green text-brand-green py-4 rounded-2xl font-bold hover:bg-brand-green hover:text-white transition-all">
-                            ✨ Ver descripción con IA
-                        </button>
                     </div>
                 </div>
             </div>
@@ -667,96 +654,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const modal = document.getElementById("propertyModal");
     if (modal) modal.classList.add("hidden");
     document.body.style.overflow = "auto";
-  };
-
-  /* ==========================================
-     IA SIMULADA (STORYTELLING)
-  ========================================== */
-  window.generatePropertyStory = (description) => {
-    const modal = document.getElementById("aiModal");
-    const content = document.getElementById("aiModalContent");
-    const loading = document.getElementById("aiLoading");
-    const title = document.getElementById("aiTitle");
-
-    if (!modal) return;
-
-    title.innerHTML = "✨ Tu vida en esta propiedad";
-    modal.classList.remove("hidden");
-    loading.classList.remove("hidden");
-    content.innerHTML = "";
-
-    setTimeout(() => {
-      loading.classList.add("hidden");
-      content.innerHTML = `
-            <p class="mb-4">Imaginate despertando en este increíble ${description}. Los rayos del sol entran por la ventana mientras preparás un café en lo que pronto será tu rincón favorito.</p>
-            <p class="mb-4">Esta propiedad no es solo metros cuadrados; es el escenario de tus próximos festejos, el refugio después de un largo día y el lugar donde tus proyectos van a crecer.</p>
-            <p>Con cada detalle pensado para el confort, esta oportunidad en ${description.split(' en ')[1] || 'esta zona'} te está esperando para empezar una nueva etapa.</p>
-            <div class="mt-6 p-4 bg-brand-light rounded-xl border border-brand-green/10 text-sm italic">
-                "Una casa se construye con paredes, pero un hogar se construye con sueños."
-            </div>
-        `;
-      lucide.createIcons();
-    }, 2000);
-  };
-
-  window.openSmartSearchModal = () => {
-    const modal = document.getElementById("aiModal");
-    const content = document.getElementById("aiModalContent");
-    const loading = document.getElementById("aiLoading");
-    const title = document.getElementById("aiTitle");
-
-    if (!modal) return;
-
-    title.innerHTML = "✨ Buscador Inteligente";
-    modal.classList.remove("hidden");
-    content.innerHTML = `
-        <div class="space-y-4">
-            <p class="text-sm text-brand-gray">Describí qué estás buscando (ej: "Un PH luminoso con patio en Colegiales para mi perro")</p>
-            <textarea id="aiSearchInput" rows="3" class="w-full p-4 bg-brand-light border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand-green/20 transition-all resize-none" placeholder="Escribí acá..."></textarea>
-            <button onclick="runSmartSearch()" class="w-full bg-brand-green text-white py-3 rounded-xl font-bold hover:bg-brand-greenLight transition-all">
-                Analizar con IA
-            </button>
-        </div>
-    `;
-    loading.classList.add("hidden");
-    lucide.createIcons();
-  };
-
-  window.runSmartSearch = () => {
-    const input = document.getElementById("aiSearchInput").value;
-    const loading = document.getElementById("aiLoading");
-    const content = document.getElementById("aiModalContent");
-
-    if (!input) return;
-
-    content.innerHTML = "";
-    loading.classList.remove("hidden");
-
-    setTimeout(() => {
-      loading.classList.add("hidden");
-      content.innerHTML = `
-            <div class="text-center py-4">
-                <i data-lucide="check-circle" class="w-12 h-12 text-brand-green mx-auto mb-4"></i>
-                <p class="font-bold text-lg mb-2">¡Entendí perfectamente!</p>
-                <p class="text-brand-gray text-sm mb-6">He analizado tu pedido: "${input}". He filtrado las mejores opciones que coinciden con tu estilo de vida.</p>
-                <button onclick="closeAIModal(); filterPropertiesByIA('${input}')" class="bg-brand-dark text-white px-8 py-3 rounded-xl font-bold">
-                    Ver Resultados
-                </button>
-            </div>
-        `;
-      lucide.createIcons();
-    }, 2500);
-  };
-
-  window.filterPropertiesByIA = (query) => {
-    // Simulación de filtrado por IA (en este caso, solo mostramos todas o algunas)
-    alert("La IA ha seleccionado las mejores propiedades para vos basadas en: " + query);
-    window.location.href = "pages/properties.html";
-  };
-
-  window.closeAIModal = () => {
-    const modal = document.getElementById("aiModal");
-    if (modal) modal.classList.add("hidden");
   };
 
   /* ==========================================
