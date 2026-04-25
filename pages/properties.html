@@ -8,7 +8,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -28,8 +28,8 @@
                         }
                     },
                     fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        heading: ['Montserrat', 'sans-serif']
+                        sans: ['Outfit', 'sans-serif'],
+                        heading: ['Playfair Display', 'serif']
                     },
                     boxShadow: {
                         'soft': '0 10px 40px -10px rgba(0,0,0,0.08)',
@@ -45,17 +45,17 @@
     <style>
         .filter-select {
             width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #E5E7EB;
-            border-radius: 0.75rem;
-            background-color: white;
+            padding: 0.75rem 0.15rem;
+            border: none;
+            border-bottom: 1px solid #D1D5DB;
+            border-radius: 0;
+            background-color: transparent;
             font-size: 0.875rem;
             outline: none;
             transition: all 0.2s;
         }
         .filter-select:focus {
-            border-color: #1B4332;
-            ring: 2px solid rgba(27, 67, 50, 0.1);
+            border-bottom-color: #C6A56A;
         }
     </style>
 </head>

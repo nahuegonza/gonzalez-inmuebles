@@ -8,7 +8,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -28,8 +28,8 @@
                         }
                     },
                     fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        heading: ['Montserrat', 'sans-serif']
+                        sans: ['Outfit', 'sans-serif'],
+                        heading: ['Playfair Display', 'serif']
                     },
                     boxShadow: {
                         'soft': '0 10px 40px -10px rgba(0,0,0,0.08)',
@@ -56,8 +56,20 @@
         }
         .input-minimal:focus {
             outline: none;
-            border-bottom-color: #1B4332;
+            border-bottom-color: #C6A56A;
             box-shadow: none;
+        }
+        .ghost-cta {
+            border: 1px solid #C6A56A;
+            color: #FDFBF7;
+            background: transparent;
+            letter-spacing: .16em;
+            text-transform: uppercase;
+            transition: all .3s ease;
+        }
+        .ghost-cta:hover {
+            background: rgba(198, 165, 106, 0.18);
+            color: #fff;
         }
         .input-admin {
             width: 100%;
@@ -123,7 +135,7 @@
       <a href="pages/properties.html" class="hover:text-brand-green">Propiedades</a>
       <a href="pages/tasacion.html" class="hover:text-brand-green">Tasación</a>
       <a href="pages/contacto.html" class="hover:text-brand-green">Contacto</a>
-      <a href="#tasacion" class="ml-2 bg-brand-green text-white px-5 py-2 rounded-full font-semibold hover:bg-brand-greenLight transition-all shadow-md shadow-brand-green/20 whitespace-nowrap">
+      <a href="#tasacion" class="ml-2 border border-[#C6A56A] text-brand-dark px-5 py-2 rounded-sm font-medium tracking-widest uppercase hover:bg-[#C6A56A]/20 transition-all whitespace-nowrap">
         Tasá tu propiedad
       </a>
     </nav>
@@ -143,7 +155,7 @@
       <a href="pages/tasacion.html" class="py-3 px-3 rounded-xl hover:bg-gray-50 font-medium text-brand-dark text-sm">Tasación</a>
       <a href="pages/contacto.html" class="py-3 px-3 rounded-xl hover:bg-gray-50 font-medium text-brand-dark text-sm">Contacto</a>
       <a href="#tasacion" onclick="document.getElementById('mainMobileMenu').classList.add('hidden')"
-         class="mt-2 bg-brand-green text-white py-3 px-4 rounded-xl font-semibold text-center text-sm">
+         class="mt-2 border border-[#C6A56A] text-brand-dark py-3 px-4 rounded-sm font-medium tracking-widest uppercase text-center text-xs">
         Tasá tu propiedad
       </a>
     </nav>
@@ -151,28 +163,28 @@
 </header>
 
         <!-- Hero Section -->
-        <section id="inicio" class="relative h-[80vh] min-h-[600px] flex items-center justify-center">
+        <section id="inicio" class="relative h-[82vh] min-h-[640px] flex items-center justify-center">
             <div class="absolute inset-0 z-0">
-                <img src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1920&q=80" alt="Casa moderna" class="w-full h-full object-cover" />
-                <div class="absolute inset-0 bg-black/40"></div>
+                <img src="https://images.unsplash.com/photo-1613977257363-707ba9348227?auto=format&fit=crop&w=2200&q=80" alt="Fachada de mansión de lujo" class="w-full h-full object-cover" />
+                <div class="absolute inset-0 bg-gradient-to-b from-[#0f1f18]/65 via-[#0f1f18]/45 to-[#0f1f18]/80"></div>
             </div>
 
             <div class="container mx-auto px-6 relative z-10 text-center mt-12">
-                <h1 class="text-4xl md:text-6xl font-heading font-bold text-white mb-6 drop-shadow-lg leading-tight">
-                    Encontrá tu próximo <br class="hidden md:block"/> lugar en el mundo.
+                <h1 class="text-4xl md:text-6xl font-heading font-semibold text-white mb-6 drop-shadow-lg leading-tight">
+                    Encontrá el arte de vivir <br class="hidden md:block"/> en una dirección única.
                 </h1>
-                <p class="text-lg md:text-xl text-white/90 mb-12 max-w-2xl mx-auto font-light drop-shadow-md">
-                    Las mejores propiedades en venta y alquiler, seleccionadas para vos.
+                <p class="text-lg md:text-xl text-white/90 mb-12 max-w-2xl mx-auto font-light tracking-wide drop-shadow-md">
+                    Curamos propiedades de alto perfil para quienes valoran diseño, calma y patrimonio.
                 </p>
 
                 <!-- Buscador Central -->
-                <div class="bg-white p-3 md:p-4 rounded-[20px] shadow-2xl max-w-5xl mx-auto">
+                <div class="bg-white/14 backdrop-blur-md border border-white/25 p-3 md:p-4 rounded-sm max-w-5xl mx-auto">
                     <form class="flex flex-col md:flex-row gap-3 md:gap-4 items-center">
                         <div class="w-full md:w-1/4 relative">
                             <i data-lucide="key" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-brand-gray"></i>
                             <select
                               id="searchOperation"
-                              class="w-full bg-brand-light rounded-xl pl-10 pr-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-green/20"
+                              class="w-full bg-[#FDFBF7]/90 border border-[#C6A56A]/40 rounded-sm pl-10 pr-4 py-3 text-sm font-medium focus:outline-none focus:border-[#C6A56A]"
                             >
                               <option value="">Operación</option>
                               <option value="venta">Venta</option>
@@ -182,9 +194,8 @@
                         
                         <div class="w-full md:w-1/4 relative">
                             <i data-lucide="home" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-brand-gray"></i>
-                            <select 
-                                <select id="searchType"
-                                class="w-full bg-brand-light rounded-xl pl-10 pr-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-green/20 appearance-none text-brand-dark cursor-pointer"
+                            <select id="searchType"
+                                class="w-full bg-[#FDFBF7]/90 border border-[#C6A56A]/40 rounded-sm pl-10 pr-4 py-3 text-sm font-medium focus:outline-none focus:border-[#C6A56A] appearance-none text-brand-dark cursor-pointer"
                                 >
                                 <option value="">Tipo de Inmueble</option>
                                 <option value="casa">Casa</option>
@@ -200,9 +211,8 @@
 
                         <div class="w-full md:w-1/4 relative">
                             <i data-lucide="map-pin" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-brand-gray"></i>
-                            <select 
-                                <select id="searchLocation"
-                                class="w-full bg-brand-light rounded-xl pl-10 pr-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-green/20 appearance-none text-brand-dark cursor-pointer"
+                            <select id="searchLocation"
+                                class="w-full bg-[#FDFBF7]/90 border border-[#C6A56A]/40 rounded-sm pl-10 pr-4 py-3 text-sm font-medium focus:outline-none focus:border-[#C6A56A] appearance-none text-brand-dark cursor-pointer"
                                 >
                                 <option value="">Ubicación</option>
                                 <option value="centro">Centro</option>
@@ -215,7 +225,7 @@
                             <button
                               type="button"
                               id="searchButton"
-                              class="w-full bg-brand-green hover:bg-brand-greenLight text-white rounded-xl py-3 px-6 font-semibold transition-colors flex items-center justify-center gap-2"
+                              class="w-full ghost-cta rounded-sm py-3 px-6 font-medium flex items-center justify-center gap-2"
                             >
                               Buscar
                             </button>
@@ -430,7 +440,7 @@
                                     <span class="font-medium text-sm">¡Solicitud enviada! Nos contactaremos a la brevedad para coordinar la tasación.</span>
                                 </div>
 
-                                <button type="submit" id="submitBtn" class="w-full bg-brand-green text-white font-semibold py-4 rounded-xl hover:bg-brand-greenLight transition-colors flex items-center justify-center gap-2 text-lg shadow-md shadow-brand-green/20">
+                                <button type="submit" id="submitBtn" class="w-full border border-[#C6A56A] text-brand-dark font-medium py-4 rounded-sm tracking-widest uppercase hover:bg-[#C6A56A]/15 transition-colors flex items-center justify-center gap-2 text-sm">
                                     Solicitar Tasación
                                     <i data-lucide="send" class="w-5 h-5"></i>
                                 </button>

@@ -209,7 +209,7 @@ document.addEventListener("DOMContentLoaded", () => {
           beds: 4,
           baths: 3,
           sqm: 280,
-          images: ["https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80"],
+          images: ["https://images.unsplash.com/photo-1513584684374-8bab748fbf90?auto=format&fit=crop&w=1200&q=80"],
         }
       ];
     }
@@ -500,19 +500,19 @@ document.addEventListener("DOMContentLoaded", () => {
         : "bg-white text-brand-dark";
 
       // Usar la primera imagen o un placeholder
-      const mainImage = prop.images && prop.images.length > 0 ? prop.images[0] : 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80';
+      const mainImage = prop.images && prop.images.length > 0 ? prop.images[0] : 'https://images.unsplash.com/photo-1513584684374-8bab748fbf90?auto=format&fit=crop&w=1200&q=80';
       const extraImagesCount = prop.images && prop.images.length > 1 ? prop.images.length - 1 : 0;
 
       const cardHTML = `
-        <article class="bg-white rounded-[16px] shadow-soft overflow-hidden flex flex-col group cursor-pointer" onclick="openPropertyModal(${prop.id})">
+        <article class="bg-[#FDFBF7] rounded-sm border border-[#e5ddca] overflow-hidden flex flex-col group cursor-pointer" onclick="openPropertyModal(${prop.id})">
           <div class="relative h-64 overflow-hidden shimmer-bg">
             <span class="absolute top-4 left-4 ${tagClass} text-xs font-bold px-3 py-1.5 rounded-full z-10">
               EN ${prop.operation}
             </span>
             ${extraImagesCount > 0 ? `<span class="absolute top-4 right-4 bg-black/50 text-white text-[10px] px-2 py-1 rounded-full z-10">+${extraImagesCount} fotos</span>` : ''}
-            <img src="${mainImage}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 img-fade" onload="this.classList.add('img-loaded')">
+            <img src="${mainImage}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 img-fade" onload="this.classList.add('img-loaded')">
             <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <span class="bg-white text-brand-dark px-4 py-2 rounded-full font-bold text-sm shadow-xl">Ver Detalles</span>
+                <span class="bg-[#FDFBF7] text-brand-dark px-4 py-2 rounded-sm font-medium text-xs tracking-widest uppercase border border-[#c6a56a]">Ver Detalle</span>
             </div>
           </div>
 
@@ -551,7 +551,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!modal) {
       modal = document.createElement("div");
       modal.id = "propertyModal";
-      modal.className = "fixed inset-0 z-[100] hidden bg-brand-dark/80 backdrop-blur-sm flex items-center justify-center p-4";
+      modal.className = "fixed inset-0 z-[100] hidden bg-brand-dark/70 backdrop-blur-md flex items-center justify-center p-4";
       document.body.appendChild(modal);
     }
 
@@ -562,7 +562,7 @@ document.addEventListener("DOMContentLoaded", () => {
       : (prop.images ? String(prop.images).split(';').filter(Boolean) : []);
 
     modal.innerHTML = `
-        <div class="bg-white rounded-[32px] shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col relative">
+        <div class="bg-[#FDFBF7] rounded-sm border border-[#e5ddca] shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col relative">
             <button onclick="closePropertyModal()" class="absolute top-4 right-4 z-10 bg-white/80 hover:bg-white p-2 rounded-full shadow-lg transition-all">
                 <i data-lucide="x" class="w-6 h-6 text-brand-dark"></i>
             </button>
@@ -676,7 +676,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const formattedPrice = new Intl.NumberFormat("es-AR").format(prop.price);
       const st = prop.status || 'Publicada';
       const stClass = statusBadge[st] || 'bg-green-100 text-green-800';
-      const thumb = prop.images && prop.images[0] ? prop.images[0] : 'https://via.placeholder.com/40';
+      const thumb = prop.images && prop.images[0] ? prop.images[0] : 'https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=200&q=80';
 
       tbody.insertAdjacentHTML(
         "beforeend",
