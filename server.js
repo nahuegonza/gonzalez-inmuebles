@@ -16,7 +16,7 @@ app.use(cookieParser());
 /* ================================================
    AUTH — login / sesión del panel admin
 ================================================ */
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Familia01$';
 const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
 const SESSION_TTL    = 8 * 60 * 60 * 1000; // 8 horas
 
