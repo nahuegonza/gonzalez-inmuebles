@@ -1,4 +1,4 @@
-/* ================================================
+?/* ================================================
    Rate limiter por IP (cliente): máx 3 envíos / 24 h
    El envío real y las keys viven en el servidor (/api/send-email)
 ================================================ */
@@ -22,14 +22,14 @@ const _checkTasacionRateLimit = async () => {
 
 document.addEventListener("DOMContentLoaded", () => {
   /* ==========================================
-     INICIALIZACIÓN
+     INICIALIZACI�"N
   ========================================== */
   if (window.lucide) {
     lucide.createIcons();
   }
 
   /* ==========================================
-     FORMULARIO DE TASACIÓN
+     FORMULARIO DE TASACI�"N
   ========================================== */
   const tasacionForm = document.getElementById("tasacionForm");
   const submitBtn = document.getElementById("submitBtn");
@@ -114,7 +114,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (sent) {
         showMsg('<i data-lucide="check-circle" class="w-5 h-5 shrink-0 text-green-600"></i><span class="font-medium">¡Solicitud enviada! Nos contactaremos a la brevedad.</span>');
       } else {
-        // Sin configurar o ambos servicios fallaron → éxito silencioso (lead igual quedó guardado)
+        // Sin configurar o ambos servicios fallaron �?' éxito silencioso (lead igual quedó guardado)
         showMsg('<i data-lucide="check-circle" class="w-5 h-5 shrink-0 text-green-600"></i><span class="font-medium">¡Solicitud recibida! Nos contactaremos a la brevedad.</span>');
       }
 
@@ -166,7 +166,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const loadProperties = async () => {
     let raw = [];
 
-    // 1. Leer desde el servidor (que a su vez lee de Google Sheets — sin exponer la URL)
+    // 1. Leer desde el servidor (que a su vez lee de Google Sheets �?" sin exponer la URL)
     try {
       const ctrl = new AbortController();
       setTimeout(() => ctrl.abort(), 6000);
@@ -224,7 +224,7 @@ document.addEventListener("DOMContentLoaded", () => {
   window.loadProperties = loadProperties;
 
   /* ==========================================
-     FILTROS Y BÚSQUEDA
+     FILTROS Y B�sSQUEDA
   ========================================== */
   let filteredProperties = [];
   // Exponer para que pages/properties.html pueda leerla/modificarla
@@ -406,8 +406,8 @@ document.addEventListener("DOMContentLoaded", () => {
       loadProperties();
       syncToSheet(newProp).then(synced => {
         alert(synced
-          ? "✓ Propiedad guardada y sincronizada con Google Sheets."
-          : "✓ Propiedad guardada. (Google Sheets no configurado o no disponible)");
+          ? "�o" Propiedad guardada y sincronizada con Google Sheets."
+          : "�o" Propiedad guardada. (Google Sheets no configurado o no disponible)");
       });
     });
   }
@@ -451,7 +451,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   /* ==========================================
-     NAVEGACIÓN PUBLIC / ADMIN
+     NAVEGACI�"N PUBLIC / ADMIN
   ========================================== */
   window.toggleView = (view) => {
     const publicView = document.getElementById("publicView");
@@ -518,12 +518,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
           <div class="p-6 flex flex-col justify-between flex-1">
             <div>
-              <h3 class="text-2xl font-bold text-brand-green">
+              <p class="font-heading font-semibold text-lg text-brand-dark leading-snug">${prop.title}</p>
+              <h3 class="text-2xl font-bold text-brand-green mt-2">
                 ${prop.currency} ${formattedPrice}
               </h3>
-              <p class="font-medium text-lg">${prop.title}</p>
               <div class="flex gap-4 mt-2 text-brand-gray text-sm">
-                 <span class="flex items-center gap-1"><i data-lucide="maximize" class="w-3 h-3"></i> ${prop.sqm}m²</span>
+                 <span class="flex items-center gap-1"><i data-lucide="maximize" class="w-3 h-3"></i> ${prop.sqm} m²</span>
                  <span class="flex items-center gap-1"><i data-lucide="bed" class="w-3 h-3"></i> ${prop.beds}</span>
                  <span class="flex items-center gap-1"><i data-lucide="bath" class="w-3 h-3"></i> ${prop.baths}</span>
               </div>
@@ -603,7 +603,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             </div>
                             <div>
                                 <p class="text-xs text-brand-gray font-bold uppercase">Superficie</p>
-                                <p class="font-bold">${prop.sqm} m²</p>
+                                <p class="font-bold">${prop.sqm} m²/p>
                             </div>
                         </div>
                         <div class="flex items-center gap-3">
@@ -752,7 +752,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <tr class="border-b border-gray-50 hover:bg-gray-50/50">
         <td class="p-3 text-xs text-gray-500">${c.fecha}</td>
         <td class="p-3 font-semibold text-sm">${c.nombre}</td>
-        <td class="p-3 text-sm">${c.telefono || '—'}</td>
+        <td class="p-3 text-sm">${c.telefono || '�?"'}</td>
         <td class="p-3 text-sm">${c.email}</td>
         <td class="p-3 text-sm text-brand-green font-medium">${c.propiedad}</td>
         <td class="p-3">
@@ -801,7 +801,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll('.agent-selector').forEach(sel => {
       const cur = sel.value;
       sel.innerHTML = '<option value="">Sin asignar</option>' +
-        agents.map(a => `<option value="${a.id}" ${String(cur) === String(a.id) ? 'selected' : ''}>${a.nombre}${a.oficina ? ' — ' + a.oficina : ''}</option>`).join('');
+        agents.map(a => `<option value="${a.id}" ${String(cur) === String(a.id) ? 'selected' : ''}>${a.nombre}${a.oficina ? ' �?" ' + a.oficina : ''}</option>`).join('');
     });
   };
 
@@ -816,7 +816,7 @@ document.addEventListener("DOMContentLoaded", () => {
           ${a.foto ? `<img src="${a.foto}" class="w-9 h-9 rounded-full object-cover">` : `<div class="w-9 h-9 rounded-full bg-brand-green/10 flex items-center justify-center"><i data-lucide="user" class="w-4 h-4 text-brand-green"></i></div>`}
           <span class="font-semibold text-sm">${a.nombre}</span>
         </div></td>
-        <td class="p-3 text-sm">${a.oficina || '—'}</td>
+        <td class="p-3 text-sm">${a.oficina || '�?"'}</td>
         <td class="p-3 text-sm">${a.telefono}</td>
         <td class="p-3 text-sm">${a.email}</td>
         <td class="p-3 text-right flex justify-end gap-2">
@@ -926,7 +926,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   /* ==========================================
-     SINCRONIZACIÓN CON GOOGLE SHEETS
+     SINCRONIZACI�"N CON GOOGLE SHEETS
   ========================================== */
   const syncToSheet = async (property) => {
     try {
@@ -949,7 +949,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadProperties();
 });
 // ===============================
-// HOME SEARCH → PROPERTIES PAGE
+// HOME SEARCH �?' PROPERTIES PAGE
 // ===============================
 const searchBtn = document.getElementById("searchButton");
 
