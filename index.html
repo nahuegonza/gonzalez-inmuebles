@@ -22,12 +22,9 @@
                         brand: {
                             green: '#1B4332',
                             greenLight: '#2D6A4F',
-                            light: '#203f2b',
-                            cream: '#FDFBF7',
-                            accent: '#C6A56A',
+                            light: '#F8F9FA',
                             dark: '#212529',
-                            gray: '#6C757D',
-                            muted: '#B8C9BE'
+                            gray: '#6C757D'
                         }
                     },
                     fontFamily: {
@@ -35,8 +32,7 @@
                         heading: ['Playfair Display', 'serif']
                     },
                     boxShadow: {
-                        'soft': '0 10px 40px -10px rgba(0,0,0,0.25)',
-                        'card': '0 4px 24px -4px rgba(0,0,0,0.35)',
+                        'soft': '0 10px 40px -10px rgba(0,0,0,0.08)',
                     }
                 }
             }
@@ -80,7 +76,7 @@
             padding: 0.75rem 1rem;
             border: 1px solid #E5E7EB;
             border-radius: 0.75rem;
-            background-color: #ffffff;
+            background-color: #F8F9FA;
             transition: all 0.2s;
         }
         .input-admin:focus {
@@ -98,7 +94,7 @@
             background: white;
         }
 
-        /* �"?�"? Shimmer skeleton para imágenes �"?�"? */
+        /* ── Shimmer skeleton para imágenes ── */
         @keyframes shimmer-slide {
             0%   { background-position: 200% 0; }
             100% { background-position: -200% 0; }
@@ -117,10 +113,10 @@
         }
     </style>
 </head>
-<body class="bg-white text-brand-dark font-sans antialiased flex flex-col min-h-screen">
+<body class="bg-brand-light text-brand-dark font-sans antialiased flex flex-col min-h-screen">
 
     <!-- ========================================== -->
-    <!-- VISTA P�sBLICA (FRONTEND)                   -->
+    <!-- VISTA PÚBLICA (FRONTEND)                   -->
     <!-- ========================================== -->
     <div id="publicView" class="block">
         <!-- Navegación -->
@@ -135,9 +131,9 @@
 
     <!-- Navegación desktop -->
     <nav class="hidden md:flex items-center gap-5 text-sm font-medium">
-      <a href="index.html" class="text-brand-dark hover:text-brand-green">Inicio</a>
-      <a href="pages/properties.html" class="text-brand-dark hover:text-brand-green">Propiedades</a>
-      <a href="pages/contacto.html" class="text-brand-dark hover:text-brand-green">Contacto</a>
+      <a href="index.html" class="hover:text-brand-green">Inicio</a>
+      <a href="pages/properties.html" class="hover:text-brand-green">Propiedades</a>
+      <a href="pages/contacto.html" class="hover:text-brand-green">Contacto</a>
       <a href="#tasacion" class="ml-2 border border-[#C6A56A] text-brand-dark px-5 py-2 rounded-sm font-medium tracking-widest uppercase hover:bg-[#C6A56A]/20 transition-all whitespace-nowrap">
         Tasá tu propiedad
       </a>
@@ -186,7 +182,7 @@
                             <i data-lucide="key" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-brand-gray"></i>
                             <select
                               id="searchOperation"
-                              class="w-full bg-[#FDFBF7]/90 border border-[#C6A56A]/40 rounded-sm pl-10 pr-4 py-3 text-sm font-medium text-brand-dark focus:outline-none focus:border-[#C6A56A] appearance-none cursor-pointer"
+                              class="w-full bg-[#FDFBF7]/90 border border-[#C6A56A]/40 rounded-sm pl-10 pr-4 py-3 text-sm font-medium focus:outline-none focus:border-[#C6A56A]"
                             >
                               <option value="">Operación</option>
                               <option value="venta">Venta</option>
@@ -243,8 +239,8 @@
             <div class="container mx-auto px-6">
                 <div class="flex justify-between items-end mb-12">
                     <div>
-                        <span class="text-brand-accent font-bold tracking-wider text-sm uppercase mb-2 block">Selección Exclusiva</span>
-                        <h2 class="text-3xl md:text-4xl font-heading font-bold text-white">Propiedades Destacadas</h2>
+                        <span class="text-brand-green font-bold tracking-wider text-sm uppercase mb-2 block">Selección Exclusiva</span>
+                        <h2 class="text-3xl md:text-4xl font-heading font-bold text-brand-dark">Propiedades Destacadas</h2>
                     </div>
                 </div>
 
@@ -254,7 +250,7 @@
                 </div>
                 
                 <!-- Estado vacío -->
-                <div id="emptyState" class="hidden text-center py-16 bg-brand-cream rounded-2xl shadow-card border border-brand-accent/20">
+                <div id="emptyState" class="hidden text-center py-16 bg-white rounded-2xl shadow-sm border border-gray-100">
                     <i data-lucide="home" class="w-16 h-16 text-gray-300 mx-auto mb-4"></i>
                     <h3 class="text-xl font-bold text-gray-700 mb-2">No hay propiedades disponibles</h3>
                     <p class="text-gray-500">Ingresá al panel de administrador para cargar tu primera propiedad.</p>
@@ -263,43 +259,43 @@
         </section>
 
         <!-- Sección de Tasación / Contacto -->
-        <section id="tasacion" class="py-24 bg-brand-light relative border-t border-white/10">
+        <section id="tasacion" class="py-24 bg-white relative">
             <div class="container mx-auto px-6">
-                <div class="rounded-[32px] p-8 md:p-16 max-w-6xl mx-auto border border-white/10 bg-white/5 shadow-card">
+                <div class="bg-brand-light rounded-[32px] p-8 md:p-16 shadow-soft max-w-6xl mx-auto">
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-16">
                         
                         <!-- Info de Contacto -->
                         <div class="lg:col-span-1">
-                            <h2 class="text-3xl md:text-4xl font-heading font-bold text-white mb-6">Tasá tu propiedad hoy</h2>
-                            <p class="text-brand-muted mb-10 text-lg leading-relaxed">
+                            <h2 class="text-3xl md:text-4xl font-heading font-bold text-brand-dark mb-6">Tasá tu propiedad hoy</h2>
+                            <p class="text-brand-gray mb-10 text-lg">
                                 Conocé el valor real de tu inmueble en el mercado actual. Completá el formulario y uno de nuestros asesores expertos se comunicará con vos a la brevedad.
                             </p>
 
                             <div class="space-y-6">
                                 <a href="https://wa.me/message/CT6J2GLTSVDZG1?text=Hola%2C%20quisiera%20solicitar%20una%20tasaci%C3%B3n" target="_blank" rel="noopener" class="flex items-center gap-4 group">
-                                    <div class="w-12 h-12 bg-white/10 border border-white/15 rounded-full flex items-center justify-center group-hover:bg-brand-accent transition-colors flex-shrink-0">
-                                        <i data-lucide="message-circle" class="w-5 h-5 text-brand-accent group-hover:text-brand-dark transition-colors"></i>
+                                    <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm group-hover:bg-brand-green transition-colors flex-shrink-0">
+                                        <i data-lucide="message-circle" class="w-5 h-5 text-brand-green group-hover:text-white transition-colors"></i>
                                     </div>
                                     <div class="min-w-0">
-                                        <p class="text-sm text-white/60 font-medium">WhatsApp Directo</p>
-                                        <p class="text-white font-semibold">+54 9 11 3284-3965</p>
+                                        <p class="text-sm text-brand-gray font-medium">WhatsApp Directo</p>
+                                        <p class="text-brand-dark font-semibold">+54 9 11 3284-3965</p>
                                     </div>
                                 </a>
 
                                 <a href="mailto:info@gonzalezinmuebles.com.ar?subject=Solicitud%20de%20Tasaci%C3%B3n" class="flex items-center gap-4 group">
-                                    <div class="w-12 h-12 bg-white/10 border border-white/15 rounded-full flex items-center justify-center group-hover:bg-brand-accent transition-colors flex-shrink-0">
-                                        <i data-lucide="mail" class="w-5 h-5 text-brand-accent group-hover:text-brand-dark transition-colors"></i>
+                                    <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm group-hover:bg-brand-green transition-colors flex-shrink-0">
+                                        <i data-lucide="mail" class="w-5 h-5 text-brand-green group-hover:text-white transition-colors"></i>
                                     </div>
                                     <div class="min-w-0">
-                                        <p class="text-sm text-white/60 font-medium">Email</p>
-                                        <p class="text-white font-semibold break-all text-sm">info@gonzalezinmuebles.com.ar</p>
+                                        <p class="text-sm text-brand-gray font-medium">Email</p>
+                                        <p class="text-brand-dark font-semibold break-all text-sm">info@gonzalezinmuebles.com.ar</p>
                                     </div>
                                 </a>
                             </div>
                         </div>
 
                         <!-- Formulario de Tasación Completo -->
-                        <div class="lg:col-span-2 bg-brand-cream p-5 sm:p-8 md:p-10 rounded-2xl shadow-card border border-brand-accent/20">
+                        <div class="lg:col-span-2 bg-white p-5 sm:p-8 md:p-10 rounded-2xl shadow-sm border border-gray-100">
                             <form id="tasacionForm" class="space-y-8">
                                 <!-- Sección 1: Datos Personales -->
                                 <div>
@@ -394,7 +390,7 @@
                                         <!-- Fila 2: Metrajes -->
                                         <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                                             <div>
-                                                <input type="number" id="tasSqm" min="1" required placeholder="M² Totales aprox. *" title="Obligatorio" class="input-minimal w-full text-brand-dark placeholder-brand-gray/60 font-medium bg-white/60 pl-2">
+                                                <input type="number" id="tasSqm" min="1" required placeholder="M² Totales aprox. *" title="Obligatorio" class="input-minimal w-full text-brand-dark placeholder-brand-gray/60 font-medium bg-brand-light/50 pl-2">
                                             </div>
                                             <div>
                                                 <input type="number" min="0" placeholder="M² Cubiertos (opc.)" class="input-minimal w-full text-brand-dark placeholder-brand-gray/60 font-medium">
@@ -525,7 +521,7 @@
         <main class="flex-1 p-6 md:p-10 overflow-y-auto">
             <div class="max-w-5xl mx-auto">
 
-                <!-- ===== SECCI�"N: PROPIEDADES ===== -->
+                <!-- ===== SECCIÓN: PROPIEDADES ===== -->
                 <div id="adminSection-propiedades" class="admin-section">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <div>
@@ -697,7 +693,7 @@
                 </div>
                 </div> <!-- /adminSection-propiedades -->
 
-                <!-- ===== SECCI�"N: CONSULTAS (ADM-203) ===== -->
+                <!-- ===== SECCIÓN: CONSULTAS (ADM-203) ===== -->
                 <div id="adminSection-consultas" class="admin-section hidden">
                     <div class="flex items-center justify-between mb-8">
                         <div>
@@ -724,7 +720,7 @@
                     </div>
                 </div>
 
-                <!-- ===== SECCI�"N: TASACIONES (ADM-204) ===== -->
+                <!-- ===== SECCIÓN: TASACIONES (ADM-204) ===== -->
                 <div id="adminSection-tasaciones" class="admin-section hidden">
                     <div class="flex items-center justify-between mb-8">
                         <div>
@@ -751,7 +747,7 @@
                     </div>
                 </div>
 
-                <!-- ===== SECCI�"N: AGENTES (ADM-206) ===== -->
+                <!-- ===== SECCIÓN: AGENTES (ADM-206) ===== -->
                 <div id="adminSection-agentes" class="admin-section hidden">
                     <div class="flex items-center justify-between mb-8">
                         <div>
@@ -813,7 +809,7 @@
                     </div>
                 </div>
 
-                <!-- ===== SECCI�"N: CATÁLOGOS (ADM-205) ===== -->
+                <!-- ===== SECCIÓN: CATÁLOGOS (ADM-205) ===== -->
                 <div id="adminSection-catalogos" class="admin-section hidden">
                     <div class="flex items-center justify-between mb-8">
                         <div>
@@ -839,7 +835,7 @@
 
 
     <!-- ========================================== -->
-   <!-- SCRIPTS CORE Y L�"GICA DEL CMS -->
+   <!-- SCRIPTS CORE Y LÓGICA DEL CMS -->
 <script src="js/main.js"></script>
 <script>
   function toggleMainMenu() {
