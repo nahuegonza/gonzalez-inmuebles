@@ -22,9 +22,12 @@
                         brand: {
                             green: '#1B4332',
                             greenLight: '#2D6A4F',
-                            light: '#F8F9FA',
+                            light: '#203f2b',
+                            cream: '#FDFBF7',
+                            accent: '#C6A56A',
                             dark: '#212529',
-                            gray: '#6C757D'
+                            gray: '#6C757D',
+                            muted: '#B8C9BE'
                         }
                     },
                     fontFamily: {
@@ -32,7 +35,8 @@
                         heading: ['Playfair Display', 'serif']
                     },
                     boxShadow: {
-                        'soft': '0 10px 40px -10px rgba(0,0,0,0.08)',
+                        'soft': '0 10px 40px -10px rgba(0,0,0,0.25)',
+                        'card': '0 4px 24px -4px rgba(0,0,0,0.35)',
                     }
                 }
             }
@@ -59,7 +63,7 @@
         }
     </style>
 </head>
-<body class="bg-brand-light text-brand-dark font-sans antialiased flex flex-col min-h-screen">
+<body class="bg-brand-light text-white/90 font-sans antialiased flex flex-col min-h-screen">
 
     <!-- Header -->
     <header class="bg-white border-b sticky top-0 z-40">
@@ -151,7 +155,7 @@
                             </select>
                         </div>
 
-                        <button onclick="resetFilters()" class="w-full py-2 text-sm text-brand-gray hover:text-brand-dark transition-colors font-medium">
+                        <button onclick="resetFilters()" class="w-full py-2 text-sm text-white/60 hover:text-brand-accent transition-colors font-medium">
                             Limpiar filtros
                         </button>
                     </div>
@@ -162,8 +166,8 @@
             <div class="flex-1">
                 <div class="flex justify-between items-center mb-8">
                     <div>
-                        <h1 class="text-2xl font-bold font-heading">Propiedades Disponibles</h1>
-                        <p id="resultCount" class="text-sm text-brand-gray mt-1"></p>
+                        <h1 class="text-2xl font-bold font-heading text-white">Propiedades Disponibles</h1>
+                        <p id="resultCount" class="text-sm text-brand-muted mt-1"></p>
                     </div>
                 </div>
 
@@ -172,7 +176,7 @@
                 </div>
 
                 <!-- Estado vacío -->
-                <div id="emptyState" class="hidden text-center py-24 bg-white rounded-3xl border border-dashed border-gray-200">
+                <div id="emptyState" class="hidden text-center py-24 bg-brand-cream rounded-3xl border border-dashed border-brand-accent/30 shadow-card">
                     <i data-lucide="search-x" class="w-12 h-12 text-gray-300 mx-auto mb-4"></i>
                     <h3 class="text-lg font-bold text-gray-700">No encontramos lo que buscás</h3>
                     <p class="text-gray-500">Probá ajustando los filtros de búsqueda.</p>

@@ -22,9 +22,12 @@
                         brand: {
                             green: '#1B4332',
                             greenLight: '#2D6A4F',
-                            light: '#F8F9FA',
+                            light: '#203f2b',
+                            cream: '#FDFBF7',
+                            accent: '#C6A56A',
                             dark: '#212529',
-                            gray: '#6C757D'
+                            gray: '#6C757D',
+                            muted: '#B8C9BE'
                         }
                     },
                     fontFamily: {
@@ -32,7 +35,8 @@
                         heading: ['Playfair Display', 'serif']
                     },
                     boxShadow: {
-                        'soft': '0 10px 40px -10px rgba(0,0,0,0.08)',
+                        'soft': '0 10px 40px -10px rgba(0,0,0,0.25)',
+                        'card': '0 4px 24px -4px rgba(0,0,0,0.35)',
                     }
                 }
             }
@@ -42,7 +46,7 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="bg-brand-light text-brand-dark font-sans antialiased flex flex-col min-h-screen">
+<body class="bg-brand-light text-white/90 font-sans antialiased flex flex-col min-h-screen">
 
     <!-- Header -->
     <header class="bg-white border-b sticky top-0 z-40">
@@ -63,8 +67,8 @@
 
     <main class="flex-1 container mx-auto px-6 py-16">
         <div class="max-w-4xl mx-auto">
-            <h1 class="text-4xl font-heading font-bold mb-4 text-center">Contactanos</h1>
-            <p class="text-brand-gray text-center mb-12 text-lg">Estamos para ayudarte a encontrar tu próximo hogar o asesorarte en tu inversión.</p>
+            <h1 class="text-4xl font-heading font-bold mb-4 text-center text-white">Contactanos</h1>
+            <p class="text-brand-muted text-center mb-12 text-lg">Estamos para ayudarte a encontrar tu próximo hogar o asesorarte en tu inversión.</p>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
                 <!-- Info -->
@@ -73,7 +77,7 @@
                         <h2 class="text-xl font-bold mb-6">Información de contacto</h2>
                         <div class="space-y-6">
                             <div class="flex items-start gap-4">
-                                <div class="w-10 h-10 bg-brand-light rounded-full flex items-center justify-center shrink-0">
+                                <div class="w-10 h-10 bg-brand-green/10 rounded-full flex items-center justify-center shrink-0">
                                     <i data-lucide="phone" class="w-5 h-5 text-brand-green"></i>
                                 </div>
                                 <div>
@@ -82,7 +86,7 @@
                                 </div>
                             </div>
                             <div class="flex items-start gap-4">
-                                <div class="w-10 h-10 bg-brand-light rounded-full flex items-center justify-center shrink-0">
+                                <div class="w-10 h-10 bg-brand-green/10 rounded-full flex items-center justify-center shrink-0">
                                     <i data-lucide="mail" class="w-5 h-5 text-brand-green"></i>
                                 </div>
                                 <div>
@@ -91,7 +95,7 @@
                                 </div>
                             </div>
                             <div class="flex items-start gap-4">
-                                <div class="w-10 h-10 bg-brand-light rounded-full flex items-center justify-center shrink-0">
+                                <div class="w-10 h-10 bg-brand-green/10 rounded-full flex items-center justify-center shrink-0">
                                     <i data-lucide="map-pin" class="w-5 h-5 text-brand-green"></i>
                                 </div>
                                 <div>
@@ -102,10 +106,10 @@
                         </div>
                     </div>
 
-                    <div class="bg-brand-green text-white p-8 rounded-2xl shadow-lg">
+                    <div class="bg-brand-green/90 border border-brand-accent/30 text-white p-8 rounded-2xl shadow-card">
                         <h3 class="text-xl font-bold mb-4">¿Buscás una tasación?</h3>
                         <p class="mb-6 opacity-90 text-sm leading-relaxed">Conocé el valor de mercado de tu propiedad con nuestro equipo de expertos. Servicio profesional y personalizado.</p>
-                        <a href="../index.html#tasacion" class="inline-block bg-white text-brand-green px-6 py-3 rounded-xl font-bold hover:bg-opacity-90 transition-all">Solicitar tasación</a>
+                        <a href="../index.html#tasacion" class="inline-block bg-brand-accent text-brand-dark px-6 py-3 rounded-xl font-bold hover:bg-brand-accent/90 transition-all">Solicitar tasación</a>
                     </div>
                 </div>
 

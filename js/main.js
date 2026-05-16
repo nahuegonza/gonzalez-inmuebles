@@ -598,7 +598,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-6 py-8 border-y border-gray-100 mb-8">
                         <div class="flex items-center gap-3">
-                            <div class="w-12 h-12 bg-brand-light rounded-2xl flex items-center justify-center">
+                            <div class="w-12 h-12 bg-brand-green/10 rounded-2xl flex items-center justify-center">
                                 <i data-lucide="maximize" class="w-6 h-6 text-brand-green"></i>
                             </div>
                             <div>
@@ -607,7 +607,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             </div>
                         </div>
                         <div class="flex items-center gap-3">
-                            <div class="w-12 h-12 bg-brand-light rounded-2xl flex items-center justify-center">
+                            <div class="w-12 h-12 bg-brand-green/10 rounded-2xl flex items-center justify-center">
                                 <i data-lucide="bed" class="w-6 h-6 text-brand-green"></i>
                             </div>
                             <div>
@@ -616,7 +616,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             </div>
                         </div>
                         <div class="flex items-center gap-3">
-                            <div class="w-12 h-12 bg-brand-light rounded-2xl flex items-center justify-center">
+                            <div class="w-12 h-12 bg-brand-green/10 rounded-2xl flex items-center justify-center">
                                 <i data-lucide="bath" class="w-6 h-6 text-brand-green"></i>
                             </div>
                             <div>
@@ -625,7 +625,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             </div>
                         </div>
                         <div class="flex items-center gap-3">
-                            <div class="w-12 h-12 bg-brand-light rounded-2xl flex items-center justify-center">
+                            <div class="w-12 h-12 bg-brand-green/10 rounded-2xl flex items-center justify-center">
                                 <i data-lucide="check-circle" class="w-6 h-6 text-brand-green"></i>
                             </div>
                             <div>
