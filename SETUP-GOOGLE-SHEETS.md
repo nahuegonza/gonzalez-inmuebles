@@ -46,7 +46,7 @@ function doGet(e) {
   }
 }
 
-// ─── GUARDAR / ACTUALIZAR propiedad (el panel admin llama esto) ───
+// ─── GUARDAR / ACTUALIZAR / BORRAR propiedad (el panel admin llama esto) ───
 function doPost(e) {
   try {
     var prop  = JSON.parse(e.postData.contents);
@@ -61,6 +61,20 @@ function doPost(e) {
       sheet.appendRow(HEADERS);
     }
 
+    var operation = prop._operation || 'upsert';
+    var data = sheet.getDataRange().getValues();
+
+    if (operation === 'delete') {
+      for (var i = 1; i < data.length; i++) {
+        if (String(data[i][0]) === String(prop.id)) {
+          sheet.deleteRow(i + 1);
+          return _jsonResponse({ success: true, deleted: true });
+        }
+      }
+
+      return _jsonResponse({ success: true, deleted: false, reason: 'not_found' });
+    }
+
     var images = Array.isArray(prop.images) ? prop.images.join(';') : (prop.images || '');
     var row = [
       prop.id, prop.title, prop.operation, prop.type, prop.currency,
@@ -72,7 +86,6 @@ function doPost(e) {
     ];
 
     // Actualizar fila existente o agregar nueva
-    var data = sheet.getDataRange().getValues();
     var rowIndex = -1;
     for (var i = 1; i < data.length; i++) {
       if (String(data[i][0]) === String(prop.id)) { rowIndex = i + 1; break; }
@@ -146,7 +159,7 @@ Y hacé lo mismo en `panel.html`.
 
 ## ¡Listo!
 
-- El **panel admin** guarda/actualiza propiedades → escribe en la Sheet via Apps Script
+- El **panel admin** guarda/actualiza/borra propiedades → escribe en la Sheet via Apps Script
 - El **sitio público** lee las propiedades → lee el CSV directamente de la Sheet (sin CORS)
 - Si alguna URL no está configurada, todo sigue funcionando con `localStorage` como fallback
 

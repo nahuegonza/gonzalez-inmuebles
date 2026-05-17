@@ -20,6 +20,38 @@ const _checkTasacionRateLimit = async () => {
   }
 };
 
+const debugLog = (scope, message, data) => {
+  const prefix = `[debug:${scope}]`;
+  if (data === undefined) console.log(prefix, message);
+  else console.log(prefix, message, data);
+};
+
+const debugWarn = (scope, message, data) => {
+  const prefix = `[debug:${scope}]`;
+  if (data === undefined) console.warn(prefix, message);
+  else console.warn(prefix, message, data);
+};
+
+const summarizeLead = (lead) => ({
+  camposConValor: Object.entries(lead || {})
+    .filter(([, value]) => Boolean(value))
+    .map(([key]) => key),
+  barrio: lead?.barrio || '',
+  tipo: lead?.tipo || '',
+  hasEmail: Boolean(lead?.email),
+  hasPhone: Boolean(lead?.telefono)
+});
+
+const summarizeProperty = (property) => ({
+  id: property?.id,
+  title: property?.title,
+  operation: property?.operation,
+  type: property?.type,
+  price: property?.price,
+  status: property?.status,
+  imagesCount: Array.isArray(property?.images) ? property.images.length : 0
+});
+
 document.addEventListener("DOMContentLoaded", () => {
   /* ==========================================
      INICIALIZACIÓN
@@ -38,6 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (tasacionForm) {
     tasacionForm.addEventListener("submit", async (e) => {
       e.preventDefault();
+      debugLog('tasacion', 'Submit interceptado');
 
       const originalBtnContent = submitBtn.innerHTML;
       const setLoading = (msg) => {
@@ -63,7 +96,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Rate limit por IP
       const allowed = await _checkTasacionRateLimit();
+      debugLog('tasacion', 'Resultado del rate limit', { allowed });
       if (!allowed) {
+        debugWarn('tasacion', 'Envío bloqueado por rate limit');
         resetBtn();
         showMsg(
           '<i data-lucide="alert-circle" class="w-5 h-5 shrink-0"></i><span>Límite alcanzado. Podés enviarnos un WhatsApp o email directamente.</span>',
@@ -89,17 +124,22 @@ document.addEventListener("DOMContentLoaded", () => {
         comentarios: document.getElementById('tasComentarios')?.value || '',
         estado: 'Nuevo'
       };
+      debugLog('tasacion', 'Lead armado antes de guardar/enviar', summarizeLead(lead));
 
       // Guardar en localStorage (panel admin)
       if (lead.nombre) {
         const leads = JSON.parse(localStorage.getItem('tasaciones_db') || '[]');
         leads.unshift(lead);
         localStorage.setItem('tasaciones_db', JSON.stringify(leads));
+        debugLog('tasacion', 'Lead guardado en localStorage', { totalTasaciones: leads.length });
+      } else {
+        debugWarn('tasacion', 'No se guarda en localStorage porque falta nombre');
       }
 
       // Enviar email via servidor (keys guardadas en variables de entorno de Render)
       let sent = false;
       try {
+        debugLog('tasacion', 'Enviando POST a /api/send-email');
         const r = await fetch('/api/send-email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -107,7 +147,15 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         const d = await r.json();
         sent = d.sent === true;
-      } catch { sent = false; }
+        debugLog('tasacion', 'Respuesta de /api/send-email', {
+          status: r.status,
+          response: d,
+          sent
+        });
+      } catch (error) {
+        sent = false;
+        console.error('[debug:tasacion] Error enviando /api/send-email', error);
+      }
 
       resetBtn();
 
@@ -131,8 +179,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const contactSuccess = document.getElementById("contactSuccess");
 
   if (contactoForm) {
-    contactoForm.addEventListener("submit", (e) => {
+    contactoForm.addEventListener("submit", async (e) => {
       e.preventDefault();
+      debugLog('contacto', 'Submit interceptado');
 
       const originalBtnContent = contactSubmit.innerHTML;
       contactSubmit.innerHTML =
@@ -141,18 +190,63 @@ document.addEventListener("DOMContentLoaded", () => {
       contactSubmit.classList.add("opacity-80", "cursor-not-allowed");
       lucide.createIcons();
 
-      setTimeout(() => {
+      const lead = {
+        tipoLead: 'contacto',
+        fecha: new Date().toLocaleString('es-AR'),
+        nombre: document.getElementById('contactName')?.value || '',
+        email: document.getElementById('contactEmail')?.value || '',
+        telefono: document.getElementById('contactPhone')?.value || '',
+        mensaje: document.getElementById('contactMessage')?.value || '',
+        propiedad: 'Contacto general',
+        estado: 'Nuevo'
+      };
+      debugLog('contacto', 'Lead armado antes de guardar/enviar', {
+        hasNombre: Boolean(lead.nombre),
+        hasEmail: Boolean(lead.email),
+        hasPhone: Boolean(lead.telefono),
+        hasMessage: Boolean(lead.mensaje)
+      });
+
+      const consultas = JSON.parse(localStorage.getItem('consultas_db') || '[]');
+      consultas.unshift(lead);
+      localStorage.setItem('consultas_db', JSON.stringify(consultas));
+      debugLog('contacto', 'Lead guardado en localStorage', { totalConsultas: consultas.length });
+
+      let sent = false;
+      try {
+        debugLog('contacto', 'Enviando POST a /api/send-email');
+        const r = await fetch('/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(lead)
+        });
+        const d = await r.json();
+        sent = d.sent === true;
+        debugLog('contacto', 'Respuesta de /api/send-email', {
+          status: r.status,
+          response: d,
+          sent
+        });
+      } catch (error) {
+        console.error('[debug:contacto] Error enviando /api/send-email', error);
+      } finally {
         contactSubmit.innerHTML = originalBtnContent;
         contactSubmit.disabled = false;
         contactSubmit.classList.remove("opacity-80", "cursor-not-allowed");
+      }
 
+      if (contactSuccess) {
+        contactSuccess.innerHTML = sent
+          ? '<i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i><span class="font-medium text-sm">¡Mensaje enviado con éxito! Te responderemos pronto.</span>'
+          : '<i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i><span class="font-medium text-sm">¡Mensaje recibido! Te responderemos pronto.</span>';
         contactSuccess.classList.remove("hidden");
-        contactoForm.reset();
+      }
+      contactoForm.reset();
+      lucide.createIcons();
 
-        setTimeout(() => {
-          contactSuccess.classList.add("hidden");
-        }, 6000);
-      }, 1500);
+      setTimeout(() => {
+        contactSuccess?.classList.add("hidden");
+      }, 6000);
     });
   }
 
@@ -360,6 +454,8 @@ document.addEventListener("DOMContentLoaded", () => {
   if (adminForm) {
     adminForm.addEventListener("submit", (e) => {
       e.preventDefault();
+      const mode = editingId ? 'edit' : 'create';
+      debugLog('propiedades', 'Submit del formulario admin', { mode, editingId });
 
       const newProp = {
         id: editingId || Date.now(),
@@ -380,11 +476,14 @@ document.addEventListener("DOMContentLoaded", () => {
         agentId: document.getElementById("adminAgent")?.value || '',
         images: document.getElementById("adminImages").value.split(";").filter(i => i)
       };
+      debugLog('propiedades', 'Propiedad armada desde formulario admin', summarizeProperty(newProp));
 
       const localData = JSON.parse(localStorage.getItem("properties_db")) || [];
+      debugLog('propiedades', 'Estado local antes de guardar', { totalLocal: localData.length });
 
       if (editingId) {
         const index = localData.findIndex(p => p.id === editingId);
+        debugLog('propiedades', 'Buscando propiedad para editar en localStorage', { editingId, index });
         if (index !== -1) {
           localData[index] = newProp;
         } else {
@@ -398,6 +497,11 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       localStorage.setItem("properties_db", JSON.stringify(localData));
+      debugLog('propiedades', 'Propiedad guardada en localStorage', {
+        mode,
+        totalLocal: localData.length,
+        property: summarizeProperty(newProp)
+      });
 
       adminForm.reset();
       document.getElementById("imagePreviews").innerHTML = "";
@@ -405,6 +509,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
       loadProperties();
       syncToSheet(newProp).then(synced => {
+        debugLog('propiedades', 'Resultado de syncToSheet después de guardar', {
+          synced,
+          propertyId: newProp.id,
+          mode
+        });
         alert(synced
           ? "✓ Propiedad guardada y sincronizada con Google Sheets."
           : "✓ Propiedad guardada. (Google Sheets no configurado o no disponible)");
@@ -413,8 +522,16 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   window.editProperty = (id) => {
+    debugLog('propiedades', 'Click en editar propiedad', { id });
     const prop = properties.find(p => p.id === id);
-    if (!prop) return;
+    if (!prop) {
+      debugWarn('propiedades', 'No se encontró la propiedad para editar', {
+        id,
+        totalProperties: properties.length
+      });
+      return;
+    }
+    debugLog('propiedades', 'Propiedad encontrada para editar', summarizeProperty(prop));
 
     editingId = id;
     document.getElementById("adminTitle").value = prop.title;
@@ -710,16 +827,33 @@ document.addEventListener("DOMContentLoaded", () => {
   /* ==========================================
      ELIMINAR PROPIEDAD
   ========================================== */
-  window.deleteProperty = (id) => {
+  window.deleteProperty = async (id) => {
+    debugLog('propiedades', 'Click en borrar propiedad', { id });
     if (confirm("¿Seguro que querés eliminar esta propiedad?")) {
       const localData = JSON.parse(localStorage.getItem("properties_db")) || [];
-      const updatedLocal = localData.filter(p => p.id !== id);
+      debugLog('propiedades', 'Estado local antes de borrar', { totalLocal: localData.length });
+      const updatedLocal = localData.filter(p => String(p.id) !== String(id));
       localStorage.setItem("properties_db", JSON.stringify(updatedLocal));
+      debugLog('propiedades', 'Estado local después de borrar', {
+        id,
+        totalLocal: updatedLocal.length,
+        removedFromLocal: updatedLocal.length !== localData.length
+      });
 
       // Invalidar cache del servidor para que el próximo GET refleje el cambio
-      fetch('/api/invalidate-cache', { method: 'POST' }).catch(() => {});
+      fetch('/api/invalidate-cache', { method: 'POST' })
+        .then(r => debugLog('propiedades', 'Cache invalidado después de borrar', { status: r.status }))
+        .catch(error => console.error('[debug:propiedades] Error invalidando cache después de borrar', error));
 
-      loadProperties();
+      const synced = await syncToSheet({ _operation: 'delete', id });
+      debugLog('propiedades', 'Resultado de syncToSheet después de borrar', { synced, propertyId: id });
+
+      await loadProperties();
+      alert(synced
+        ? "✓ Propiedad eliminada y sincronizada con Google Sheets."
+        : "✓ Propiedad eliminada localmente. (No se pudo borrar en Google Sheets)");
+    } else {
+      debugLog('propiedades', 'Borrado cancelado por el usuario', { id });
     }
   };
 
@@ -930,12 +1064,18 @@ document.addEventListener("DOMContentLoaded", () => {
   ========================================== */
   const syncToSheet = async (property) => {
     try {
+      debugLog('propiedades', 'Enviando POST a /api/sync-property', summarizeProperty(property));
       const r = await fetch('/api/sync-property', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify(property)
       });
       const d = await r.json();
+      debugLog('propiedades', 'Respuesta de /api/sync-property', {
+        status: r.status,
+        response: d,
+        propertyId: property?.id
+      });
       return d.ok === true;
     } catch (e) {
       console.error('Error al sincronizar con Google Sheets:', e);

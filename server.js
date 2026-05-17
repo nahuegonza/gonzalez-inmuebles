@@ -5,7 +5,7 @@ import nodemailer from 'nodemailer';
 import cookieParser from 'cookie-parser';
 import crypto from 'crypto';
 
-const app  = express();
+const app = express();
 const PORT = process.env.PORT || 3000;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -13,23 +13,97 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
+const newRequestId = () => crypto.randomUUID?.() || crypto.randomBytes(8).toString('hex');
+const truncateText = (value, maxLength = 300) => {
+  const text = String(value ?? '');
+  return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
+};
+const getUrlInfo = (value) => {
+  if (!value) return { configured: false };
+  try {
+    const url = new URL(value);
+    return {
+      configured: true,
+      host: url.host,
+      pathnamePrefix: truncateText(url.pathname, 60)
+    };
+  } catch {
+    return { configured: true, invalidUrl: true };
+  }
+};
+const summarizePropertyPayload = (property = {}) => ({
+  operation: property._operation || 'upsert',
+  id: property.id ?? null,
+  title: property.title || null,
+  price: property.price ?? null,
+  location: property.location || null,
+  status: property.status || null,
+  imagesCount: Array.isArray(property.images) ? property.images.length : 0,
+  fields: Object.keys(property)
+});
+const logStartupDiagnostics = () => {
+  console.log('[startup] Configuración de entorno', {
+    nodeEnv: process.env.NODE_ENV || 'sin NODE_ENV',
+    nodeVersion: process.version,
+    cwd: process.cwd(),
+    port: PORT,
+    render: Boolean(process.env.RENDER),
+    hasAdminPassword: Boolean(process.env.ADMIN_PASSWORD),
+    hasSessionSecret: Boolean(process.env.SESSION_SECRET),
+    appsScriptUrl: getUrlInfo(process.env.APPS_SCRIPT_URL),
+    sheetsPubUrl: getUrlInfo(process.env.SHEETS_PUB_URL),
+    emailjs: {
+      hasService: Boolean(process.env.EMAILJS_SERVICE),
+      hasTemplate: Boolean(process.env.EMAILJS_TEMPLATE),
+      hasPublicKey: Boolean(process.env.EMAILJS_PUBKEY),
+      hasPrivateKey: Boolean(process.env.EMAILJS_PRIVATE_KEY)
+    }
+  });
+};
+
+app.use((req, res, next) => {
+  if (!req.path.startsWith('/api/')) return next();
+
+  const requestId = req.headers['x-request-id'] || newRequestId();
+  const startedAt = Date.now();
+  req.requestId = requestId;
+
+  console.log(`[request:${requestId}] Inicio`, {
+    method: req.method,
+    path: req.path,
+    contentType: req.headers['content-type'] || null,
+    userAgent: truncateText(req.headers['user-agent'], 120)
+  });
+
+  res.on('finish', () => {
+    console.log(`[request:${requestId}] Fin`, {
+      method: req.method,
+      path: req.path,
+      status: res.statusCode,
+      durationMs: Date.now() - startedAt
+    });
+  });
+
+  next();
+});
+
 /* ================================================
    AUTH — login / sesión del panel admin
 ================================================ */
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Familia01$';
 const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
-const SESSION_TTL    = 8 * 60 * 60 * 1000; // 8 horas
+const SESSION_TTL = 8 * 60 * 60 * 1000; // 8 horas
 
 const signToken = (payload) => {
   const data = JSON.stringify(payload);
-  const sig  = crypto.createHmac('sha256', SESSION_SECRET).update(data).digest('hex');
+  const sig = crypto.createHmac('sha256', SESSION_SECRET).update(data).digest('hex');
   return Buffer.from(data).toString('base64') + '.' + sig;
 };
 const verifyToken = (token) => {
   if (!token) return null;
   const [b64, sig] = token.split('.');
   if (!b64 || !sig) return null;
-  const data     = Buffer.from(b64, 'base64').toString();
+  const data = Buffer.from(b64, 'base64').toString();
   const expected = crypto.createHmac('sha256', SESSION_SECRET).update(data).digest('hex');
   if (sig !== expected) return null;
   const payload = JSON.parse(data);
@@ -53,7 +127,7 @@ app.post('/api/login', (req, res) => {
   res.cookie('admin_session', token, {
     httpOnly: true,   // JS del cliente no puede leerla
     sameSite: 'lax',
-    maxAge:   SESSION_TTL
+    maxAge: SESSION_TTL
   });
   res.json({ ok: true });
 });
@@ -84,7 +158,7 @@ const parseCSV = (text) => {
   const headers = csvSplit(rows[0]);
   return rows.slice(1).map(row => {
     const vals = csvSplit(row);
-    const obj  = {};
+    const obj = {};
     headers.forEach((h, i) => { obj[h.trim()] = (vals[i] ?? '').trim(); });
     return obj;
   });
@@ -111,22 +185,34 @@ let _cache = { data: null, expiresAt: 0 };
 
 const fetchProperties = async () => {
   const url = process.env.SHEETS_PUB_URL;
-  if (!url) return [];
+  if (!url) {
+    console.warn('[properties] SHEETS_PUB_URL no configurada');
+    return [];
+  }
 
-  const r    = await fetch(url);
+  console.log('[properties] Leyendo CSV publicado', getUrlInfo(url));
+  const r = await fetch(url);
   const text = await r.text();
+  console.log('[properties] Respuesta CSV', {
+    status: r.status,
+    ok: r.ok,
+    contentType: r.headers.get('content-type'),
+    responseLength: text.length
+  });
 
   if (text.trimStart().startsWith('<')) {
-    console.warn('[properties] La Sheet devolvió HTML — publicala en: Archivo → Compartir → Publicar en la web → CSV');
+    console.warn('[properties] La Sheet devolvió HTML — publicala en: Archivo → Compartir → Publicar en la web → CSV', {
+      preview: truncateText(text)
+    });
     return [];
   }
 
   return parseCSV(text).map(p => ({
     ...p,
     price: Number(p.price) || 0,
-    beds:  Number(p.beds)  || 0,
+    beds: Number(p.beds) || 0,
     baths: Number(p.baths) || 0,
-    sqm:   Number(p.sqm)   || 0,
+    sqm: Number(p.sqm) || 0,
     images: p.images ? String(p.images).split(';').filter(Boolean) : []
   }));
 };
@@ -138,17 +224,21 @@ const fetchProperties = async () => {
 app.get('/api/properties', async (req, res) => {
   try {
     if (Date.now() < _cache.expiresAt && _cache.data) {
+      console.log(`[properties:${req.requestId}] Cache hit`, { count: _cache.data.length });
       return res.json(_cache.data); // cache hit
     }
-    const props    = await fetchProperties();
-    _cache.data      = props;
+    const props = await fetchProperties();
+    _cache.data = props;
     _cache.expiresAt = Date.now() + CACHE_TTL;
     console.log(`[properties] Cache refrescado — ${props.length} propiedades, próximo refresh en ${CACHE_TTL / 1000}s`);
     res.json(props);
   } catch (e) {
-    console.error('[/api/properties]', e.message);
+    console.error(`[properties:${req.requestId}] Error`, e.message);
     // Si falla el fetch pero tenemos cache viejo, lo usamos igual
-    if (_cache.data) return res.json(_cache.data);
+    if (_cache.data) {
+      console.warn(`[properties:${req.requestId}] Usando cache vieja por error`, { count: _cache.data.length });
+      return res.json(_cache.data);
+    }
     res.status(502).json({ error: 'No se pudo leer la Sheet' });
   }
 });
@@ -160,7 +250,7 @@ app.get('/api/properties', async (req, res) => {
 ================================================ */
 app.post('/api/invalidate-cache', (req, res) => {
   _cache.expiresAt = 0;
-  console.log('[cache] Invalidado manualmente');
+  console.log(`[cache:${req.requestId}] Invalidado manualmente`);
   res.json({ ok: true });
 });
 
@@ -170,104 +260,203 @@ app.post('/api/invalidate-cache', (req, res) => {
    Ahora podemos leer la respuesta (sin no-cors).
 ================================================ */
 app.post('/api/sync-property', async (req, res) => {
+  const requestId = req.requestId || newRequestId();
   const url = process.env.APPS_SCRIPT_URL;
-  if (!url) return res.json({ ok: false, reason: 'no_url' });
+  const operation = req.body?._operation || 'upsert';
+  const propertyId = req.body?.id ?? 'sin-id';
+
+  console.log(`[sync-property:${requestId}] Inicio`, {
+    operation,
+    propertyId,
+    appsScriptUrl: getUrlInfo(url),
+    payload: summarizePropertyPayload(req.body)
+  });
+
+  if (!url) {
+    console.warn(`[sync-property:${requestId}] APPS_SCRIPT_URL no configurada`);
+    return res.json({ ok: false, reason: 'no_url' });
+  }
 
   try {
+    const body = JSON.stringify(req.body);
+    console.log(`[sync-property:${requestId}] Enviando a Apps Script`, {
+      operation,
+      propertyId,
+      bodyLength: body.length
+    });
+
     const r = await fetch(url, {
-      method:  'POST',
+      method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
-      body:    JSON.stringify(req.body)
+      body
     });
     const text = await r.text();
     let data = {};
-    try { data = JSON.parse(text); } catch {}
+    let parsedJson = false;
+    try {
+      data = JSON.parse(text);
+      parsedJson = true;
+    } catch {
+      console.warn(`[sync-property:${requestId}] La respuesta no es JSON`, {
+        status: r.status,
+        contentType: r.headers.get('content-type'),
+        responseLength: text.length,
+        responsePreview: truncateText(text)
+      });
+    }
+    const syncOk = r.ok && parsedJson && data.success !== false;
+    console.log(`[sync-property:${requestId}] Respuesta de Apps Script`, {
+      status: r.status,
+      ok: r.ok,
+      contentType: r.headers.get('content-type'),
+      parsedJson,
+      appsScriptSuccess: data.success,
+      deleted: data.deleted,
+      reason: data.reason,
+      responseKeys: Object.keys(data),
+      syncOk
+    });
+
+    if (!syncOk) {
+      console.warn(`[sync-property:${requestId}] Sync falló o quedó indeterminado`, {
+        operation,
+        propertyId,
+        httpOk: r.ok,
+        parsedJson,
+        appsScriptSuccess: data.success,
+        error: data.error,
+        responsePreview: parsedJson ? undefined : truncateText(text)
+      });
+    }
+
     // Invalidar cache: el próximo GET traerá los datos frescos de la Sheet
     _cache.expiresAt = 0;
-    res.json({ ok: data.success !== false });
+    res.json({
+      ok: syncOk,
+      operation,
+      appsScript: parsedJson ? data : { parse_error: true, status: r.status }
+    });
   } catch (e) {
-    console.error('[/api/sync-property]', e.message);
+    console.error(`[sync-property:${requestId}] Error`, {
+      operation,
+      propertyId,
+      message: e.message,
+      stack: e.stack
+    });
     res.status(502).json({ ok: false, error: e.message });
   }
 });
 
 /* ================================================
    POST /api/send-email
-   Primario: Gmail SMTP via Nodemailer (server-side, sin restricciones de CORS)
-   Fallback:  EmailJS API
+   Envía tasaciones, consultas generales y consultas
+   por propiedad usando EmailJS del lado servidor.
    Ninguna credencial sale al cliente.
 ================================================ */
 app.post('/api/send-email', async (req, res) => {
+  const requestId = req.requestId || newRequestId();
   const lead = req.body;
+  const leadType = lead?.tipoLead || lead?.source || 'tasacion';
+  const subjectByType = {
+    tasacion: `Nueva tasación - ${lead?.nombre || 'sin nombre'}`,
+    contacto: `Nuevo mensaje de contacto - ${lead?.nombre || 'sin nombre'}`,
+    consulta_propiedad: `Consulta por propiedad - ${lead?.propiedad || 'sin propiedad'}`
+  };
+  const subject = subjectByType[leadType] || `Nuevo contacto - ${lead?.nombre || 'sin nombre'}`;
+  const comentarios = lead?.comentarios || lead?.mensaje || '—';
 
-  const cuerpo = `
-Nueva solicitud de tasación recibida:
+  console.log(`[send-email:${requestId}] Solicitud recibida`, {
+    leadType,
+    camposConValor: Object.entries(lead || {})
+      .filter(([, value]) => Boolean(value))
+      .map(([key]) => key),
+    hasEmail: Boolean(lead?.email),
+    hasPhone: Boolean(lead?.telefono),
+    hasMessage: Boolean(lead?.mensaje || lead?.comentarios),
+    propertyId: lead?.propiedadId || null
+  });
 
-Nombre:       ${lead.nombre}
-Teléfono:     ${lead.telefono}
-Email:        ${lead.email}
-Barrio:       ${lead.barrio}
-Tipo:         ${lead.tipo}
-Ambientes:    ${lead.ambientes}
-M² totales:   ${lead.sqm}
-Antigüedad:   ${lead.antiguedad}
-Comentarios:  ${lead.comentarios || '—'}
-Fecha:        ${lead.fecha}
-  `.trim();
-/*
-  // Primario: Gmail SMTP via Nodemailer
-  const gmailUser = process.env.GMAIL_USER;
-  const gmailPass = process.env.GMAIL_APP_PASSWORD;
-  if (gmailUser && gmailPass) {
-    try {
-      const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: { user: gmailUser, pass: gmailPass }
-      });
-      await transporter.sendMail({
-        from:    `"González Inmuebles" <${gmailUser}>`,
-        to:      gmailUser,
-        replyTo: lead.email || gmailUser,
-        subject: `Nueva tasación – ${lead.nombre} | ${lead.barrio || 'sin barrio'}`,
-        text:    cuerpo
-      });
-      return res.json({ sent: true, via: 'gmail' });
-    } catch (e) {
-      console.warn('[/api/send-email] Gmail falló:', e.message);
-    }
+  if (!lead?.nombre || !lead?.email) {
+    console.warn(`[send-email:${requestId}] Payload incompleto`, {
+      leadType,
+      hasNombre: Boolean(lead?.nombre),
+      hasEmail: Boolean(lead?.email)
+    });
+    return res.status(400).json({ sent: false, error: 'missing_required_fields' });
   }
-*/
-  // Fallback: EmailJS API (server-side call)
-  const ejService  = process.env.EMAILJS_SERVICE;
+
+  // EmailJS API (server-side call)
+  const ejService = process.env.EMAILJS_SERVICE;
   const ejTemplate = process.env.EMAILJS_TEMPLATE;
-  const ejPubkey   = process.env.EMAILJS_PUBKEY;
-  const ejPrivkey  = process.env.EMAILJS_PRIVATE_KEY; // recomendado para llamadas server-side
+  const ejPubkey = process.env.EMAILJS_PUBKEY;
+  const ejPrivkey = process.env.EMAILJS_PRIVATE_KEY; // recomendado para llamadas server-side
+  console.log(`[send-email:${requestId}] Configuración EmailJS`, {
+    hasService: Boolean(ejService),
+    hasTemplate: Boolean(ejTemplate),
+    hasPublicKey: Boolean(ejPubkey),
+    hasPrivateKey: Boolean(ejPrivkey)
+  });
   if (ejService && ejTemplate && ejPubkey) {
     try {
+      const templateParams = {
+        subject,
+        tipoLead: leadType,
+        tipo_lead: leadType,
+        nombre: lead.nombre,
+        telefono: lead.telefono || '',
+        email: lead.email,
+        barrio: lead.barrio || '',
+        tipo: lead.tipo || '',
+        ambientes: lead.ambientes || '',
+        sqm: lead.sqm || '',
+        antiguedad: lead.antiguedad || '',
+        comentarios,
+        mensaje: lead.mensaje || comentarios,
+        propiedad: lead.propiedad || '',
+        propiedadId: lead.propiedadId || '',
+        fecha: lead.fecha || new Date().toLocaleString('es-AR')
+      };
+      console.log(`[send-email:${requestId}] Enviando a EmailJS`, {
+        leadType,
+        templateParamsKeys: Object.keys(templateParams),
+        hasSubject: Boolean(subject)
+      });
+
       const r = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-        method:  'POST',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          service_id:   ejService,
-          template_id:  ejTemplate,
-          user_id:      ejPubkey,
-          accessToken:  ejPrivkey || undefined,
-          template_params: {
-            subject:    `Nueva tasación – ${lead.nombre}`,
-            nombre:     lead.nombre,   telefono: lead.telefono,
-            email:      lead.email,    barrio:   lead.barrio,
-            tipo:       lead.tipo,     ambientes:lead.ambientes,
-            sqm:        lead.sqm,      antiguedad:lead.antiguedad,
-            comentarios:lead.comentarios || '—', fecha: lead.fecha
-          }
+          service_id: ejService,
+          template_id: ejTemplate,
+          user_id: ejPubkey,
+          accessToken: ejPrivkey || undefined,
+          template_params: templateParams
         })
       });
-      if (r.status === 200) return res.json({ sent: true, via: 'emailjs' });
+      console.log(`[send-email:${requestId}] Respuesta EmailJS`, {
+        leadType,
+        status: r.status,
+        ok: r.ok,
+        contentType: r.headers.get('content-type')
+      });
+      if (r.status === 200) return res.json({ sent: true, via: 'emailjs', leadType });
+      const errorText = await r.text();
+      console.warn(`[send-email:${requestId}] EmailJS respondió error`, {
+        leadType,
+        status: r.status,
+        preview: truncateText(errorText)
+      });
     } catch (e) {
-      console.warn('[/api/send-email] EmailJS falló:', e.message);
+      console.warn(`[send-email:${requestId}] EmailJS falló:`, {
+        message: e.message,
+        stack: e.stack
+      });
     }
+  } else {
+    console.warn(`[send-email:${requestId}] EmailJS incompleto, no se intenta envío`);
   }
 
+  console.warn(`[send-email:${requestId}] No se pudo enviar email por ningún proveedor`);
   res.json({ sent: false });
 });
 
@@ -279,5 +468,6 @@ app.get('*', (req, res) => {
 });
 
 app.listen(PORT, () => {
+  logStartupDiagnostics();
   console.log(`González Inmuebles corriendo en http://localhost:${PORT}`);
 });

@@ -324,16 +324,50 @@
         let createImgs = [];   // imágenes del formulario de creación
         let editImgs   = [];   // imágenes del modal de edición
 
+        function panelDebug(scope, message, data) {
+            const prefix = `[debug:panel:${scope}]`;
+            if (data === undefined) console.log(prefix, message);
+            else console.log(prefix, message, data);
+        }
+
+        function panelWarn(scope, message, data) {
+            const prefix = `[debug:panel:${scope}]`;
+            if (data === undefined) console.warn(prefix, message);
+            else console.warn(prefix, message, data);
+        }
+
+        function summarizePanelProperty(property) {
+            return {
+                id: property?.id,
+                title: property?.title,
+                operation: property?.operation,
+                type: property?.type,
+                price: property?.price,
+                status: property?.status,
+                imagesCount: Array.isArray(property?.images) ? property.images.length : 0
+            };
+        }
+
         /* ─── SYNC ─── */
         async function syncToSheet(property) {
             try {
+                panelDebug('sync', 'Enviando POST a /api/sync-property', summarizePanelProperty(property));
                 const r = await fetch('/api/sync-property', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(property)
                 });
-                return (await r.json()).ok === true;
-            } catch { return false; }
+                const data = await r.json();
+                panelDebug('sync', 'Respuesta de /api/sync-property', {
+                    status: r.status,
+                    response: data,
+                    propertyId: property?.id
+                });
+                return data.ok === true;
+            } catch (error) {
+                console.error('[debug:panel:sync] Error sincronizando con Google Sheets', error);
+                return false;
+            }
         }
 
         /* ─── CLOUDINARY: dos instancias independientes ─── */
@@ -435,13 +469,24 @@
             try {
                 const r = await fetch('/api/properties');
                 if (r.ok) fromAPI = await r.json();
-            } catch (_) {}
+                panelDebug('propiedades', 'Carga desde /api/properties', {
+                    status: r.status,
+                    fromAPI: Array.isArray(fromAPI) ? fromAPI.length : 0
+                });
+            } catch (error) {
+                console.error('[debug:panel:propiedades] Error cargando /api/properties', error);
+            }
             const fromLocal = JSON.parse(localStorage.getItem('properties_db') || '[]');
             const merged = [...fromLocal];
             fromAPI.forEach(p => {
                 if (!merged.find(x => String(x.id) === String(p.id))) merged.push(p);
             });
             allProperties = merged;
+            panelDebug('propiedades', 'Propiedades combinadas para el panel', {
+                fromLocal: fromLocal.length,
+                fromAPI: fromAPI.length,
+                total: allProperties.length
+            });
             renderList();
         }
 
@@ -485,6 +530,7 @@
 
         /* ─── GUARDAR (crear) ─── */
         async function submitProp() {
+            panelDebug('propiedades', 'Submit de nueva propiedad iniciado');
             const d = {
                 id: Date.now(),
                 title: document.getElementById('t').value,
@@ -500,11 +546,20 @@
                 images: [...createImgs],
                 status: 'Publicada'
             };
-            if (!d.title || !d.price || !d.location) return alert('Completá los campos obligatorios.');
+            panelDebug('propiedades', 'Nueva propiedad armada', summarizePanelProperty(d));
+            if (!d.title || !d.price || !d.location) {
+                panelWarn('propiedades', 'Nueva propiedad incompleta', summarizePanelProperty(d));
+                return alert('Completá los campos obligatorios.');
+            }
 
             const s = JSON.parse(localStorage.getItem('properties_db') || '[]');
+            panelDebug('propiedades', 'Estado local antes de crear', { totalLocal: s.length });
             s.unshift(d);
             localStorage.setItem('properties_db', JSON.stringify(s));
+            panelDebug('propiedades', 'Propiedad creada en localStorage', {
+                property: summarizePanelProperty(d),
+                totalLocal: s.length
+            });
 
             document.getElementById('f_prop').reset();
             createImgs = [];
@@ -512,8 +567,14 @@
             renderCreatePreviews();
 
             await loadAllProperties();
-            fetch('/api/invalidate-cache', { method: 'POST' }).catch(() => {});
+            fetch('/api/invalidate-cache', { method: 'POST' })
+                .then(r => panelDebug('propiedades', 'Cache invalidado después de crear', { status: r.status }))
+                .catch(error => console.error('[debug:panel:propiedades] Error invalidando cache después de crear', error));
             const synced = await syncToSheet(d);
+            panelDebug('propiedades', 'Resultado de syncToSheet después de crear', {
+                synced,
+                propertyId: d.id
+            });
             alert(synced
                 ? '✓ Propiedad guardada y sincronizada con Google Sheets.'
                 : '✓ Propiedad guardada. (Google Sheets no configurado o no disponible)');
@@ -521,8 +582,16 @@
 
         /* ─── MODAL EDICIÓN ─── */
         function openModal(id) {
+            panelDebug('propiedades', 'Click en editar propiedad', { id });
             const p = allProperties.find(x => String(x.id) === String(id));
-            if (!p) return;
+            if (!p) {
+                panelWarn('propiedades', 'No se encontró la propiedad para abrir el modal', {
+                    id,
+                    totalProperties: allProperties.length
+                });
+                return;
+            }
+            panelDebug('propiedades', 'Propiedad encontrada para editar', summarizePanelProperty(p));
 
             document.getElementById('m_id').value   = p.id;
             document.getElementById('m_t').value    = p.title || '';
@@ -561,6 +630,7 @@
 
         async function saveModal() {
             const id = document.getElementById('m_id').value;
+            panelDebug('propiedades', 'Guardando edición desde modal', { id });
             const d = {
                 id,
                 title: document.getElementById('m_t').value,
@@ -576,31 +646,64 @@
                 images: [...editImgs],
                 status: 'Publicada'
             };
-            if (!d.title || !d.price || !d.location) return alert('Completá los campos obligatorios.');
+            panelDebug('propiedades', 'Propiedad editada armada', summarizePanelProperty(d));
+            if (!d.title || !d.price || !d.location) {
+                panelWarn('propiedades', 'Edición incompleta', summarizePanelProperty(d));
+                return alert('Completá los campos obligatorios.');
+            }
 
             let s = JSON.parse(localStorage.getItem('properties_db') || '[]');
             const idx = s.findIndex(x => String(x.id) === String(id));
+            panelDebug('propiedades', 'Buscando propiedad editada en localStorage', {
+                id,
+                idx,
+                totalLocal: s.length
+            });
             if (idx !== -1) s[idx] = d; else s.unshift(d);
             localStorage.setItem('properties_db', JSON.stringify(s));
+            panelDebug('propiedades', 'Edición guardada en localStorage', {
+                property: summarizePanelProperty(d),
+                totalLocal: s.length
+            });
 
             closeModal();
             await loadAllProperties();
-            fetch('/api/invalidate-cache', { method: 'POST' }).catch(() => {});
+            fetch('/api/invalidate-cache', { method: 'POST' })
+                .then(r => panelDebug('propiedades', 'Cache invalidado después de editar', { status: r.status }))
+                .catch(error => console.error('[debug:panel:propiedades] Error invalidando cache después de editar', error));
             const synced = await syncToSheet(d);
+            panelDebug('propiedades', 'Resultado de syncToSheet después de editar', {
+                synced,
+                propertyId: d.id
+            });
             alert(synced
                 ? '✓ Cambios guardados y sincronizados con Google Sheets.'
                 : '✓ Cambios guardados. (Google Sheets no configurado o no disponible)');
         }
 
         /* ─── BORRAR ─── */
-        function borrar(id) {
+        async function borrar(id) {
+            panelDebug('propiedades', 'Click en borrar propiedad', { id });
             if (!confirm('¿Eliminás esta propiedad?')) return;
             let s = JSON.parse(localStorage.getItem('properties_db') || '[]');
+            panelDebug('propiedades', 'Estado local antes de borrar', { totalLocal: s.length });
             s = s.filter(x => String(x.id) !== String(id));
             localStorage.setItem('properties_db', JSON.stringify(s));
             allProperties = allProperties.filter(x => String(x.id) !== String(id));
+            panelDebug('propiedades', 'Propiedad borrada del estado local del panel', {
+                id,
+                totalLocal: s.length,
+                totalPanel: allProperties.length
+            });
             renderList();
-            fetch('/api/invalidate-cache', { method: 'POST' }).catch(() => {});
+            fetch('/api/invalidate-cache', { method: 'POST' })
+                .then(r => panelDebug('propiedades', 'Cache invalidado después de borrar', { status: r.status }))
+                .catch(error => console.error('[debug:panel:propiedades] Error invalidando cache después de borrar', error));
+            const synced = await syncToSheet({ _operation: 'delete', id });
+            panelDebug('propiedades', 'Resultado de syncToSheet después de borrar', { synced, propertyId: id });
+            alert(synced
+                ? '✓ Propiedad eliminada y sincronizada con Google Sheets.'
+                : '✓ Propiedad eliminada localmente. (No se pudo borrar en Google Sheets)');
         }
 
         /* ─── CSV ─── */

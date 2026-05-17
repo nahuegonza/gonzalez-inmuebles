@@ -339,25 +339,62 @@
             // Handler del formulario de contacto de la ficha
             const detailForm = document.getElementById('detailContactForm');
             if (detailForm) {
-                detailForm.addEventListener('submit', (e) => {
+                detailForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
+                    const submitButton = detailForm.querySelector('button[type="submit"]');
+                    const originalButtonContent = submitButton?.innerHTML;
+                    if (submitButton) {
+                        submitButton.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin mx-auto"></i>';
+                        submitButton.disabled = true;
+                    }
+                    lucide.createIcons();
+
                     const lead = {
+                        tipoLead: 'consulta_propiedad',
                         fecha: new Date().toLocaleString('es-AR'),
                         nombre: document.getElementById('dcName').value,
                         email: document.getElementById('dcEmail').value,
                         telefono: document.getElementById('dcPhone').value,
                         mensaje: document.getElementById('dcMessage').value,
                         propiedad: prop.title,
-                        propiedadId: prop.id
+                        propiedadId: prop.id,
+                        estado: 'Nuevo'
                     };
                     // Guardar en localStorage para que el admin las vea (ADM-203)
                     const consultas = JSON.parse(localStorage.getItem('consultas_db') || '[]');
                     consultas.unshift(lead);
                     localStorage.setItem('consultas_db', JSON.stringify(consultas));
 
+                    let sent = false;
+                    try {
+                        const response = await fetch('/api/send-email', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(lead)
+                        });
+                        const data = await response.json();
+                        sent = data.sent === true;
+                        console.log('[debug:consulta-propiedad] Respuesta de /api/send-email', {
+                            status: response.status,
+                            data,
+                            sent
+                        });
+                    } catch (error) {
+                        console.error('[debug:consulta-propiedad] Error enviando /api/send-email', error);
+                    } finally {
+                        if (submitButton) {
+                            submitButton.innerHTML = originalButtonContent;
+                            submitButton.disabled = false;
+                        }
+                    }
+
                     detailForm.reset();
-                    document.getElementById('dcSuccess').classList.remove('hidden');
-                    setTimeout(() => document.getElementById('dcSuccess').classList.add('hidden'), 6000);
+                    const successBox = document.getElementById('dcSuccess');
+                    successBox.textContent = sent
+                        ? '✓ Consulta enviada. Un agente te contactará pronto.'
+                        : '✓ Consulta recibida. Un agente te contactará pronto.';
+                    successBox.classList.remove('hidden');
+                    setTimeout(() => successBox.classList.add('hidden'), 6000);
                 });
             }
         });
