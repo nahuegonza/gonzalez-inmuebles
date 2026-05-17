@@ -1,4 +1,4 @@
-/* ================================================
+  /* ================================================
    Rate limiter por IP (cliente): máx 3 envíos / 24 h
    El envío real y las keys viven en el servidor (/api/send-email)
 ================================================ */

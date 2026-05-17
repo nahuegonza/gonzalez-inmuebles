@@ -214,7 +214,7 @@ Antigüedad:   ${lead.antiguedad}
 Comentarios:  ${lead.comentarios || '—'}
 Fecha:        ${lead.fecha}
   `.trim();
-
+/*
   // Primario: Gmail SMTP via Nodemailer
   const gmailUser = process.env.GMAIL_USER;
   const gmailPass = process.env.GMAIL_APP_PASSWORD;
@@ -236,7 +236,7 @@ Fecha:        ${lead.fecha}
       console.warn('[/api/send-email] Gmail falló:', e.message);
     }
   }
-
+*/
   // Fallback: EmailJS API (server-side call)
   const ejService  = process.env.EMAILJS_SERVICE;
   const ejTemplate = process.env.EMAILJS_TEMPLATE;
