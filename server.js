@@ -117,6 +117,11 @@ const requireAuth = (req, res, next) => {
   res.redirect('/login.html');
 };
 
+const requireApiAuth = (req, res, next) => {
+  if (verifyToken(req.cookies?.admin_session)) return next();
+  res.status(401).json({ ok: false, error: 'auth_required' });
+};
+
 // POST /api/login — valida contraseña y emite cookie
 app.post('/api/login', (req, res) => {
   const { password } = req.body;
@@ -160,6 +165,9 @@ const parseCSV = (text) => {
     const vals = csvSplit(row);
     const obj = {};
     headers.forEach((h, i) => { obj[h.trim()] = (vals[i] ?? '').trim(); });
+    if (vals.length > headers.length) {
+      obj.__extra = vals.slice(headers.length).map(v => (v ?? '').trim());
+    }
     return obj;
   });
 };
@@ -173,6 +181,76 @@ const csvSplit = (line) => {
   }
   out.push(cur);
   return out;
+};
+
+const VALID_PROPERTY_STATUSES = new Set(['Publicada', 'Borrador', 'Pausada', 'Vendida/Alquilada']);
+
+const normalizePropertyRow = (p) => {
+  const normalized = { ...p };
+  const extras = Array.isArray(p.__extra) ? p.__extra.filter(Boolean) : [];
+  const looksShifted = extras.length > 0
+    && (!VALID_PROPERTY_STATUSES.has(String(p.status || '')))
+    && (!String(p.images || '').includes('http'));
+
+  if (looksShifted) {
+    const recoveredImages = extras.find(value => String(value).includes('http'));
+    const recoveredStatus = extras.find(value => VALID_PROPERTY_STATUSES.has(String(value)));
+    const recoveredDescription = extras.find(value => {
+      const text = String(value);
+      return text && !text.includes('http') && !VALID_PROPERTY_STATUSES.has(text);
+    });
+
+    if (recoveredImages) normalized.images = recoveredImages;
+    if (recoveredStatus) normalized.status = recoveredStatus;
+    if (!normalized.description && recoveredDescription) normalized.description = recoveredDescription;
+
+    console.warn('[properties] Fila con columnas corridas recuperada desde valores extra', {
+      id: p.id,
+      title: p.title,
+      originalImages: p.images,
+      originalStatus: p.status,
+      recoveredStatus: normalized.status,
+      recoveredImagesCount: recoveredImages ? String(recoveredImages).split(';').filter(Boolean).length : 0
+    });
+  } else if (p.status && !VALID_PROPERTY_STATUSES.has(String(p.status))) {
+    console.warn('[properties] Fila con status no reconocido', {
+      id: p.id,
+      title: p.title,
+      status: p.status
+    });
+  }
+
+  delete normalized.__extra;
+  return normalized;
+};
+
+const normalizeBlockedPropertyTitle = (value) => String(value ?? '')
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .toLowerCase()
+  .replace(/[^a-z0-9]+/g, ' ')
+  .trim()
+  .replace(/\s+/g, ' ');
+
+const BLOCKED_PROPERTY_TITLE_PHRASES = new Set([
+  'inodoro con olor a culo'
+]);
+
+const isBlockedPropertyRow = (p) => {
+  const normalizedTitle = normalizeBlockedPropertyTitle(p.title);
+  if (!normalizedTitle) return false;
+
+  for (const blockedTitle of BLOCKED_PROPERTY_TITLE_PHRASES) {
+    if (normalizedTitle === blockedTitle || normalizedTitle.includes(blockedTitle)) {
+      console.warn('[properties] Fila bloqueada por titulo ofensivo/de prueba conocido', {
+        id: truncateText(p.id, 80),
+        title: truncateText(p.title, 120)
+      });
+      return true;
+    }
+  }
+
+  return false;
 };
 
 /* ================================================
@@ -207,14 +285,17 @@ const fetchProperties = async () => {
     return [];
   }
 
-  return parseCSV(text).map(p => ({
-    ...p,
-    price: Number(p.price) || 0,
-    beds: Number(p.beds) || 0,
-    baths: Number(p.baths) || 0,
-    sqm: Number(p.sqm) || 0,
-    images: p.images ? String(p.images).split(';').filter(Boolean) : []
-  }));
+  return parseCSV(text)
+    .map(normalizePropertyRow)
+    .filter(p => !isBlockedPropertyRow(p))
+    .map(p => ({
+      ...p,
+      price: Number(p.price) || 0,
+      beds: Number(p.beds) || 0,
+      baths: Number(p.baths) || 0,
+      sqm: Number(p.sqm) || 0,
+      images: p.images && String(p.images) !== '0' ? String(p.images).split(';').filter(Boolean) : []
+    }));
 };
 
 /* ================================================
@@ -248,7 +329,7 @@ app.get('/api/properties', async (req, res) => {
    Llamado automáticamente después de guardar una propiedad
    para que el próximo GET traiga datos frescos.
 ================================================ */
-app.post('/api/invalidate-cache', (req, res) => {
+app.post('/api/invalidate-cache', requireApiAuth, (req, res) => {
   _cache.expiresAt = 0;
   console.log(`[cache:${req.requestId}] Invalidado manualmente`);
   res.json({ ok: true });
@@ -259,7 +340,7 @@ app.post('/api/invalidate-cache', (req, res) => {
    Reenvía la propiedad al Apps Script para escribirla en la Sheet.
    Ahora podemos leer la respuesta (sin no-cors).
 ================================================ */
-app.post('/api/sync-property', async (req, res) => {
+app.post('/api/sync-property', requireApiAuth, async (req, res) => {
   const requestId = req.requestId || newRequestId();
   const url = process.env.APPS_SCRIPT_URL;
   const operation = req.body?._operation || 'upsert';
@@ -311,8 +392,10 @@ app.post('/api/sync-property', async (req, res) => {
       contentType: r.headers.get('content-type'),
       parsedJson,
       appsScriptSuccess: data.success,
+      appsScriptVersion: data.version,
       deleted: data.deleted,
       reason: data.reason,
+      headers: Array.isArray(data.headers) ? data.headers : undefined,
       responseKeys: Object.keys(data),
       syncOk
     });
@@ -324,7 +407,9 @@ app.post('/api/sync-property', async (req, res) => {
         httpOk: r.ok,
         parsedJson,
         appsScriptSuccess: data.success,
+        appsScriptVersion: data.version,
         error: data.error,
+        headers: Array.isArray(data.headers) ? data.headers : undefined,
         responsePreview: parsedJson ? undefined : truncateText(text)
       });
     }

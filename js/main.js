@@ -52,6 +52,24 @@ const summarizeProperty = (property) => ({
   imagesCount: Array.isArray(property?.images) ? property.images.length : 0
 });
 
+const getPropertyDetailRelativeUrl = (id) => {
+  const normalizedPath = window.location.pathname.replace(/\\/g, '/').replace(/^\/+/, '');
+  const isPagesPath = /(^|\/)pages\//.test(normalizedPath);
+  const prefix = isPagesPath ? '' : 'pages/';
+  return `${prefix}property-detail.html?id=${encodeURIComponent(id)}`;
+};
+
+const getPropertyDetailAbsoluteUrl = (id) => {
+  const normalizedPath = window.location.pathname.replace(/\\/g, '/');
+  const pagesMatch = normalizedPath.match(/(^|\/)pages\//);
+  const basePath = pagesMatch
+    ? normalizedPath.slice(0, pagesMatch.index)
+    : normalizedPath.replace(/\/[^/]*$/, '');
+  const normalizedBasePath = basePath.replace(/\/+$/, '');
+
+  return `${window.location.origin}${normalizedBasePath}/pages/property-detail.html?id=${encodeURIComponent(id)}`;
+};
+
 document.addEventListener("DOMContentLoaded", () => {
   /* ==========================================
      INICIALIZACIÓN
@@ -321,17 +339,59 @@ document.addEventListener("DOMContentLoaded", () => {
      FILTROS Y BÚSQUEDA
   ========================================== */
   let filteredProperties = [];
+  let propertyFiltersApplied = false;
+
   // Exponer para que pages/properties.html pueda leerla/modificarla
   Object.defineProperty(window, 'filteredProperties', {
     get: () => filteredProperties,
-    set: (v) => { filteredProperties = v; }
+    set: (v) => {
+      filteredProperties = v;
+      propertyFiltersApplied = true;
+    }
   });
+
+  const setFilterControlValue = (id, value) => {
+    const control = document.getElementById(id);
+    if (!control) return;
+
+    if (control.tagName === "SELECT") {
+      const matchingOption = Array.from(control.options).find(
+        (option) => option.value.toLowerCase() === String(value).toLowerCase()
+      );
+      control.value = matchingOption ? matchingOption.value : "";
+      return;
+    }
+
+    control.value = value || "";
+  };
+
+  const getSelectedLocationFilters = () => {
+    if (typeof window.getSelectedLocations === "function") {
+      const locations = window.getSelectedLocations();
+      return Array.isArray(locations) ? locations : [];
+    }
+
+    if (typeof selectedLocations !== "undefined" && Array.isArray(selectedLocations)) {
+      return selectedLocations;
+    }
+
+    return [];
+  };
+
+  const normalizeLocationFilter = (location) =>
+    String(location || "").toLowerCase().split(",")[0].trim();
 
   const applyUrlFilters = () => {
     const params = new URLSearchParams(window.location.search);
     const operation = params.get("operacion");
     const type = params.get("tipo");
     const location = params.get("ubicacion");
+
+    setFilterControlValue("filterOperation", operation);
+    setFilterControlValue("filterType", type);
+    setFilterControlValue("filterLocation", location);
+
+    propertyFiltersApplied = Boolean(operation || type || location);
 
     filteredProperties = [...properties];
 
@@ -355,15 +415,35 @@ document.addEventListener("DOMContentLoaded", () => {
   window.filterProperties = () => {
     const operation = document.getElementById("filterOperation")?.value;
     const type = document.getElementById("filterType")?.value;
-    const minPrice = Number(document.getElementById("filterMinPrice")?.value) || 0;
-    const maxPrice = Number(document.getElementById("filterMaxPrice")?.value) || Infinity;
+    const locationValue = document.getElementById("filterLocation")?.value.trim();
+    const selectedLocationFilters = getSelectedLocationFilters()
+      .map(normalizeLocationFilter)
+      .filter(Boolean);
+    const minPriceValue = document.getElementById("filterMinPrice")?.value;
+    const maxPriceValue = document.getElementById("filterMaxPrice")?.value;
+    const minPrice = Number(minPriceValue) || 0;
+    const maxPrice = Number(maxPriceValue) || Infinity;
     const sortOrder = document.getElementById("filterSort")?.value;
+    propertyFiltersApplied = Boolean(
+      operation ||
+      type ||
+      locationValue ||
+      selectedLocationFilters.length ||
+      minPriceValue ||
+      maxPriceValue ||
+      sortOrder
+    );
 
     filteredProperties = properties.filter((p) => {
       const matchOp = !operation || p.operation.toLowerCase() === operation.toLowerCase();
       const matchType = !type || p.type.toLowerCase() === type.toLowerCase();
+      const normalizedPropertyLocation = p.location.toLowerCase();
+      const matchLocationInput = !locationValue || normalizedPropertyLocation.includes(locationValue.toLowerCase());
+      const matchLocationTags = selectedLocationFilters.length === 0 || selectedLocationFilters.some(
+        (loc) => normalizedPropertyLocation.includes(loc)
+      );
       const matchPrice = p.price >= minPrice && p.price <= maxPrice;
-      return matchOp && matchType && matchPrice;
+      return matchOp && matchType && matchLocationInput && matchLocationTags && matchPrice;
     });
 
     if (sortOrder === "asc") {
@@ -598,9 +678,16 @@ document.addEventListener("DOMContentLoaded", () => {
     grid.innerHTML = "";
 
     const isPublished = p => !p.status || p.status === 'Publicada';
-    const displayProperties = (filteredProperties.length > 0 || window.location.search)
+    const displayProperties = (propertyFiltersApplied || window.location.search)
       ? filteredProperties.filter(isPublished)
       : properties.filter(isPublished);
+    const resultCount = document.getElementById("resultCount");
+
+    if (resultCount) {
+      resultCount.textContent = displayProperties.length > 0
+        ? `${displayProperties.length} propiedad${displayProperties.length !== 1 ? 'es' : ''} encontrada${displayProperties.length !== 1 ? 's' : ''}`
+        : '';
+    }
 
     if (displayProperties.length === 0) {
       emptyState.classList.remove("hidden");
@@ -619,10 +706,12 @@ document.addEventListener("DOMContentLoaded", () => {
       // Usar la primera imagen o un placeholder
       const mainImage = prop.images && prop.images.length > 0 ? prop.images[0] : 'https://images.unsplash.com/photo-1513584684374-8bab748fbf90?auto=format&fit=crop&w=1200&q=80';
       const extraImagesCount = prop.images && prop.images.length > 1 ? prop.images.length - 1 : 0;
+      const detailHref = getPropertyDetailRelativeUrl(prop.id);
+      const modalId = JSON.stringify(prop.id);
 
       const cardHTML = `
-        <article class="bg-[#FDFBF7] rounded-sm border border-[#e5ddca] overflow-hidden flex flex-col group cursor-pointer" onclick="openPropertyModal(${prop.id})">
-          <div class="relative h-64 overflow-hidden shimmer-bg">
+        <article class="bg-[#FDFBF7] rounded-sm border border-[#e5ddca] overflow-hidden flex flex-col group">
+          <a href="${detailHref}" class="block relative h-64 overflow-hidden shimmer-bg" aria-label="Ver detalle de la propiedad">
             <span class="absolute top-4 left-4 ${tagClass} text-xs font-bold px-3 py-1.5 rounded-full z-10">
               EN ${prop.operation}
             </span>
@@ -631,7 +720,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <span class="bg-[#FDFBF7] text-brand-dark px-4 py-2 rounded-sm font-medium text-xs tracking-widest uppercase border border-[#c6a56a]">Ver Detalle</span>
             </div>
-          </div>
+          </a>
 
           <div class="p-6 flex flex-col justify-between flex-1">
             <div>
@@ -647,6 +736,14 @@ document.addEventListener("DOMContentLoaded", () => {
               <p class="text-sm text-brand-gray flex items-center gap-1 mt-2">
                 <i data-lucide="map-pin" class="w-4 h-4"></i> ${prop.location}
               </p>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3 mt-6">
+              <a href="${detailHref}" class="flex-1 border border-[#C6A56A] text-brand-dark text-center py-3 rounded-sm tracking-widest uppercase font-medium text-xs hover:bg-[#C6A56A]/15 transition">
+                Ver ficha
+              </a>
+              <button type="button" onclick="openPropertyModal(${modalId})" class="flex-1 bg-brand-green text-white py-3 rounded-sm tracking-widest uppercase font-medium text-xs hover:bg-brand-greenLight transition">
+                Vista rápida
+              </button>
             </div>
           </div>
         </article>
@@ -673,6 +770,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const formattedPrice = new Intl.NumberFormat("es-AR").format(prop.price);
+    const detailHref = getPropertyDetailRelativeUrl(prop.id);
+    const detailUrl = getPropertyDetailAbsoluteUrl(prop.id);
+    const whatsappText = encodeURIComponent(`Hola! Me interesa la propiedad: ${prop.title} ${detailUrl}`);
 
     const imgs = Array.isArray(prop.images)
       ? prop.images.filter(Boolean)
@@ -752,8 +852,11 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                     </div>
                     
-                    <div class="flex gap-4">
-                        <a href="https://wa.me/5491175259500?text=Hola! Me interesa la propiedad: ${prop.title}" target="_blank" class="w-full bg-brand-green text-white text-center py-4 rounded-2xl font-bold hover:bg-brand-greenLight transition-all flex items-center justify-center gap-2">
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <a href="${detailHref}" class="w-full border border-[#C6A56A] text-brand-dark text-center py-4 rounded-2xl font-bold hover:bg-[#C6A56A]/15 transition-all flex items-center justify-center gap-2">
+                            <i data-lucide="external-link" class="w-5 h-5"></i> Ver ficha completa
+                        </a>
+                        <a href="https://wa.me/5491175259500?text=${whatsappText}" target="_blank" class="w-full bg-brand-green text-white text-center py-4 rounded-2xl font-bold hover:bg-brand-greenLight transition-all flex items-center justify-center gap-2">
                             <i data-lucide="message-circle" class="w-5 h-5"></i> Consultar por WhatsApp
                         </a>
                     </div>

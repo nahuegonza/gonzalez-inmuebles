@@ -220,6 +220,7 @@
 
         // Chips de ubicación seleccionados
         let selectedLocations = [];
+        window.getSelectedLocations = () => selectedLocations;
 
         function resetFilters() {
             document.getElementById('filterOperation').value = '';
@@ -229,8 +230,10 @@
             document.getElementById('filterSort').value = '';
             document.getElementById('filterLocation').value = '';
             selectedLocations = [];
+            if (window.location.search) {
+                window.history.replaceState({}, '', window.location.pathname);
+            }
             renderLocationTags();
-            filterProperties();
         }
 
         function renderLocationTags() {
@@ -275,10 +278,10 @@
         function selectLocation(loc) {
             if (!selectedLocations.includes(loc)) {
                 selectedLocations.push(loc);
-                renderLocationTags();
             }
             document.getElementById('filterLocation').value = '';
             document.getElementById('locationSuggestions').classList.add('hidden');
+            renderLocationTags();
         }
 
         // Cerrar sugerencias al hacer clic afuera
@@ -288,20 +291,10 @@
             }
         });
 
-        // Sobreescribir filterProperties para incluir ubicación y conteo
+        // Sobreescribir filterProperties para actualizar el conteo
         const _origFilter = window.filterProperties;
         window.filterProperties = () => {
             _origFilter();
-            // Filtrar por ubicaciones seleccionadas (chips)
-            if (selectedLocations.length > 0 && window.filteredProperties) {
-                window.filteredProperties = window.filteredProperties.filter(p =>
-                    selectedLocations.some(loc =>
-                        p.location.toLowerCase().includes(loc.toLowerCase().split(',')[0].trim())
-                    )
-                );
-                window.renderPublicProperties();
-            }
-            // Actualizar conteo
             const grid = document.getElementById('propertiesGrid');
             const count = grid ? grid.children.length : 0;
             const el = document.getElementById('resultCount');

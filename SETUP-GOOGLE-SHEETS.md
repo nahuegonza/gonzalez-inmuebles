@@ -17,6 +17,8 @@ Este proyecto usa **Google Apps Script** como backend serverless gratuito para e
 ```javascript
 /** @OnlyCurrentDoc */
 
+var SCRIPT_VERSION = '2026-05-22-schema-v2';
+
 // ─── LEER propiedades (el sitio público llama esto al cargar) ───
 function doGet(e) {
   try {
@@ -53,13 +55,25 @@ function doPost(e) {
     var ss    = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getSheetByName('Propiedades') || ss.getActiveSheet();
 
-    var HEADERS = ['id','title','operation','type','currency','price','location',
-                   'beds','baths','sqm','sqmCovered','sqmLand','antiguedad',
-                   'description','images','status','agentId'];
+    var DEFAULT_HEADERS = ['id','title','operation','type','currency','price',
+                           'location','beds','baths','sqm','images','status'];
+    var OPTIONAL_HEADERS = ['description','sqmCovered','sqmLand','antiguedad','agentId'];
 
     if (sheet.getLastRow() === 0) {
-      sheet.appendRow(HEADERS);
+      sheet.appendRow(DEFAULT_HEADERS);
     }
+
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]
+      .map(function(h) { return String(h).trim(); })
+      .filter(Boolean);
+
+    if (headers.length === 0) {
+      headers = DEFAULT_HEADERS;
+      sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    }
+
+    headers = _ensureHeaders(sheet, headers, OPTIONAL_HEADERS);
+    _repairShiftedRows(sheet, headers);
 
     var operation = prop._operation || 'upsert';
     var data = sheet.getDataRange().getValues();
@@ -68,38 +82,139 @@ function doPost(e) {
       for (var i = 1; i < data.length; i++) {
         if (String(data[i][0]) === String(prop.id)) {
           sheet.deleteRow(i + 1);
-          return _jsonResponse({ success: true, deleted: true });
+          return _jsonResponse({ success: true, deleted: true, version: SCRIPT_VERSION });
         }
       }
 
-      return _jsonResponse({ success: true, deleted: false, reason: 'not_found' });
+      return _jsonResponse({ success: true, deleted: false, reason: 'not_found', version: SCRIPT_VERSION });
     }
 
-    var images = Array.isArray(prop.images) ? prop.images.join(';') : (prop.images || '');
-    var row = [
-      prop.id, prop.title, prop.operation, prop.type, prop.currency,
-      Number(prop.price) || 0, prop.location,
-      Number(prop.beds) || 0, Number(prop.baths) || 0, Number(prop.sqm) || 0,
-      Number(prop.sqmCovered) || 0, Number(prop.sqmLand) || 0,
-      prop.antiguedad || '', prop.description || '',
-      images, prop.status || 'Publicada', prop.agentId || ''
-    ];
+    var valuesByHeader = _propertyValuesByHeader(prop);
+    var row = headers.map(function(header) {
+      return valuesByHeader.hasOwnProperty(header) ? valuesByHeader[header] : '';
+    });
 
     // Actualizar fila existente o agregar nueva
     var rowIndex = -1;
-    for (var i = 1; i < data.length; i++) {
-      if (String(data[i][0]) === String(prop.id)) { rowIndex = i + 1; break; }
+    for (var j = 1; j < data.length; j++) {
+      if (String(data[j][0]) === String(prop.id)) { rowIndex = j + 1; break; }
     }
 
     if (rowIndex > 0) {
-      sheet.getRange(rowIndex, 1, 1, row.length).setValues([row]);
+      // Limpiar celdas sobrantes de versiones anteriores que escribían más columnas.
+      sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).clearContent();
+      sheet.getRange(rowIndex, 1, 1, headers.length).setValues([row]);
     } else {
       sheet.appendRow(row);
     }
 
-    return _jsonResponse({ success: true });
+    return _jsonResponse({ success: true, headers: headers, version: SCRIPT_VERSION });
   } catch(err) {
-    return _jsonResponse({ success: false, error: err.toString() });
+    return _jsonResponse({ success: false, error: err.toString(), version: SCRIPT_VERSION });
+  }
+}
+
+function _propertyValuesByHeader(prop) {
+  var images = Array.isArray(prop.images) ? prop.images.join(';') : (prop.images || '');
+  return {
+    id: prop.id,
+    title: prop.title || '',
+    operation: prop.operation || '',
+    type: prop.type || '',
+    currency: prop.currency || 'USD',
+    price: Number(prop.price) || 0,
+    location: prop.location || '',
+    beds: Number(prop.beds) || 0,
+    baths: Number(prop.baths) || 0,
+    sqm: Number(prop.sqm) || 0,
+    sqmCovered: Number(prop.sqmCovered) || 0,
+    sqmLand: Number(prop.sqmLand) || 0,
+    antiguedad: prop.antiguedad || '',
+    description: prop.description || '',
+    images: images,
+    status: prop.status || 'Publicada',
+    agentId: prop.agentId || ''
+  };
+}
+
+function _ensureHeaders(sheet, headers, optionalHeaders) {
+  var updated = headers.slice();
+  optionalHeaders.forEach(function(header) {
+    if (updated.indexOf(header) === -1) {
+      updated.push(header);
+    }
+  });
+
+  if (updated.length !== headers.length) {
+    sheet.getRange(1, 1, 1, updated.length).setValues([updated]);
+  }
+
+  return updated;
+}
+
+function _repairShiftedRows(sheet, headers) {
+  var lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return;
+
+  var lastColumn = Math.max(sheet.getLastColumn(), headers.length);
+  var range = sheet.getRange(2, 1, lastRow - 1, lastColumn);
+  var rows = range.getValues();
+  var changed = false;
+
+  var imagesIdx = headers.indexOf('images');
+  var statusIdx = headers.indexOf('status');
+  var descriptionIdx = headers.indexOf('description');
+  var validStatuses = ['Publicada', 'Borrador', 'Pausada', 'Vendida/Alquilada'];
+
+  if (imagesIdx === -1 || statusIdx === -1) return;
+
+  rows.forEach(function(row) {
+    var currentImages = String(row[imagesIdx] || '');
+    var currentStatus = String(row[statusIdx] || '');
+    var looksShifted = currentImages.indexOf('http') === -1
+      && validStatuses.indexOf(currentStatus) === -1;
+
+    if (!looksShifted) return;
+
+    var recoveredImages = '';
+    var recoveredStatus = '';
+    var recoveredDescription = '';
+
+    for (var i = statusIdx + 1; i < row.length; i++) {
+      var value = String(row[i] || '').trim();
+      if (!value) continue;
+
+      if (!recoveredImages && value.indexOf('http') !== -1) {
+        recoveredImages = value;
+      } else if (!recoveredStatus && validStatuses.indexOf(value) !== -1) {
+        recoveredStatus = value;
+      } else if (!recoveredDescription && value.indexOf('http') === -1 && validStatuses.indexOf(value) === -1) {
+        recoveredDescription = value;
+      }
+    }
+
+    if (recoveredImages) {
+      row[imagesIdx] = recoveredImages;
+      changed = true;
+    }
+    if (recoveredStatus) {
+      row[statusIdx] = recoveredStatus;
+      changed = true;
+    }
+    if (descriptionIdx !== -1 && recoveredDescription && !row[descriptionIdx]) {
+      row[descriptionIdx] = recoveredDescription;
+      changed = true;
+    }
+
+    if (recoveredImages || recoveredStatus || recoveredDescription) {
+      for (var j = headers.length; j < row.length; j++) {
+        row[j] = '';
+      }
+    }
+  });
+
+  if (changed) {
+    range.setValues(rows);
   }
 }
 
