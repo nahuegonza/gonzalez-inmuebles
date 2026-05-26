@@ -150,11 +150,11 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/.../exec';
 
 | Canal | Valor actual |
 |-------|-------------|
-| WhatsApp | `+54 9 11 7525 9500` |
+| WhatsApp | `+54 9 1124987684` |
 | Email | `info@gonzalezinmuebles.com.ar` |
 
-Para cambiarlos, buscar en `index.html` y `pages/tasacion.html`:
-- `wa.me/5491175259500`
+Para cambiarlos, buscar en el HTML y en `js/main.js`:
+- `wa.me/5491124987684`
 - `mailto:info@gonzalezinmuebles.com.ar`
 
 ---

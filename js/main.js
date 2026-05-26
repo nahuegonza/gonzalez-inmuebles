@@ -856,7 +856,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         <a href="${detailHref}" class="w-full border border-[#C6A56A] text-brand-dark text-center py-4 rounded-2xl font-bold hover:bg-[#C6A56A]/15 transition-all flex items-center justify-center gap-2">
                             <i data-lucide="external-link" class="w-5 h-5"></i> Ver ficha completa
                         </a>
-                        <a href="https://wa.me/5491175259500?text=${whatsappText}" target="_blank" class="w-full bg-brand-green text-white text-center py-4 rounded-2xl font-bold hover:bg-brand-greenLight transition-all flex items-center justify-center gap-2">
+                        <a href="https://wa.me/5491124987684?text=${whatsappText}" target="_blank" class="w-full bg-brand-green text-white text-center py-4 rounded-2xl font-bold hover:bg-brand-greenLight transition-all flex items-center justify-center gap-2">
                             <i data-lucide="message-circle" class="w-5 h-5"></i> Consultar por WhatsApp
                         </a>
                     </div>
