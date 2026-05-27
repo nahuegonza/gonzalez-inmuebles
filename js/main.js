@@ -501,27 +501,33 @@ document.addEventListener("DOMContentLoaded", () => {
      CLOUDINARY UPLOAD WIDGET
   ========================================== */
   let uploadedImages = [];
-  const uploadWidget = window.cloudinary?.createUploadWidget({
-    cloudName: 'dzyiwuftf',
-    uploadPreset: 'ml_default',
-    sources: ['local', 'url', 'camera'],
-    multiple: true
-  }, (error, result) => {
-    if (!error && result && result.event === "success") {
-      uploadedImages.push(result.info.secure_url);
-      document.getElementById("adminImages").value = uploadedImages.join(";");
+  let uploadWidget = null;
+  try {
+    uploadWidget = window.cloudinary?.createUploadWidget({
+      cloudName: 'dzyiwuftf',
+      uploadPreset: 'ml_default',
+      sources: ['local', 'url', 'camera'],
+      multiple: true
+    }, (error, result) => {
+      if (!error && result && result.event === "success") {
+        uploadedImages.push(result.info.secure_url);
+        const adminImages = document.getElementById("adminImages");
+        if (adminImages) adminImages.value = uploadedImages.join(";");
 
-      // Preview
-      const previews = document.getElementById("imagePreviews");
-      const img = document.createElement("img");
-      img.src = result.info.secure_url;
-      img.className = "h-20 w-20 object-cover rounded-lg border";
-      previews.appendChild(img);
-    }
-  });
+        const previews = document.getElementById("imagePreviews");
+        if (!previews) return;
+        const img = document.createElement("img");
+        img.src = result.info.secure_url;
+        img.className = "h-20 w-20 object-cover rounded-lg border";
+        previews.appendChild(img);
+      }
+    });
+  } catch (error) {
+    console.warn('[González] Cloudinary no disponible:', error.message);
+  }
 
   const uploadBtn = document.getElementById("upload_widget");
-  if (uploadBtn) {
+  if (uploadBtn && uploadWidget) {
     uploadBtn.addEventListener("click", () => uploadWidget.open());
   }
 
@@ -690,11 +696,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (displayProperties.length === 0) {
-      emptyState.classList.remove("hidden");
+      emptyState?.classList.remove("hidden");
       return;
     }
 
-    emptyState.classList.add("hidden");
+    emptyState?.classList.add("hidden");
 
     displayProperties.forEach((prop) => {
       const formattedPrice = new Intl.NumberFormat("es-AR").format(prop.price);
@@ -707,7 +713,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const mainImage = prop.images && prop.images.length > 0 ? prop.images[0] : 'https://images.unsplash.com/photo-1513584684374-8bab748fbf90?auto=format&fit=crop&w=1200&q=80';
       const extraImagesCount = prop.images && prop.images.length > 1 ? prop.images.length - 1 : 0;
       const detailHref = getPropertyDetailRelativeUrl(prop.id);
-      const modalId = JSON.stringify(prop.id);
+      const propertyIdAttr = encodeURIComponent(String(prop.id ?? ""));
 
       const cardHTML = `
         <article class="bg-[#FDFBF7] rounded-sm border border-[#e5ddca] overflow-hidden flex flex-col group">
@@ -741,7 +747,7 @@ document.addEventListener("DOMContentLoaded", () => {
               <a href="${detailHref}" class="flex-1 border border-[#C6A56A] text-brand-dark text-center py-3 rounded-sm tracking-widest uppercase font-medium text-xs hover:bg-[#C6A56A]/15 transition">
                 Ver ficha
               </a>
-              <button type="button" onclick="openPropertyModal(${modalId})" class="flex-1 bg-brand-green text-white py-3 rounded-sm tracking-widest uppercase font-medium text-xs hover:bg-brand-greenLight transition">
+              <button type="button" data-property-id="${propertyIdAttr}" class="js-property-preview flex-1 bg-brand-green text-white py-3 rounded-sm tracking-widest uppercase font-medium text-xs hover:bg-brand-greenLight transition">
                 Vista rápida
               </button>
             </div>
@@ -755,19 +761,44 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   /* ==========================================
-     MODAL DE DETALLE
+     MODAL DE DETALLE (Vista rápida)
   ========================================== */
-  window.openPropertyModal = (id) => {
-    const prop = properties.find(p => String(p.id) === String(id));
-    if (!prop) return;
+  window.getPropertyById = (id) =>
+    properties.find((p) => String(p.id) === String(id));
 
+  const ensurePropertyModalShell = () => {
     let modal = document.getElementById("propertyModal");
-    if (!modal) {
-      modal = document.createElement("div");
-      modal.id = "propertyModal";
-      modal.className = "fixed inset-0 z-[100] hidden bg-brand-dark/70 backdrop-blur-md flex items-center justify-center p-4";
-      document.body.appendChild(modal);
+    if (modal) return modal;
+
+    modal = document.createElement("div");
+    modal.id = "propertyModal";
+    modal.className = "fixed inset-0 z-[100] hidden items-center justify-center bg-brand-dark/70 backdrop-blur-md p-4";
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+    modal.innerHTML = '<div id="propertyModalContent" class="w-full max-w-4xl"></div>';
+    document.body.appendChild(modal);
+
+    modal.addEventListener("click", (event) => {
+      if (event.target === modal) window.closePropertyModal();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") window.closePropertyModal();
+    });
+
+    return modal;
+  };
+
+  window.openPropertyModal = (id) => {
+    const prop = window.getPropertyById(id);
+    if (!prop) {
+      debugWarn("propiedades", "Vista rápida: propiedad no encontrada", { id });
+      return;
     }
+
+    const modal = ensurePropertyModalShell();
+    const content = document.getElementById("propertyModalContent");
+    if (!content) return;
 
     const formattedPrice = new Intl.NumberFormat("es-AR").format(prop.price);
     const detailHref = getPropertyDetailRelativeUrl(prop.id);
@@ -776,24 +807,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const imgs = Array.isArray(prop.images)
       ? prop.images.filter(Boolean)
-      : (prop.images ? String(prop.images).split(';').filter(Boolean) : []);
+      : (prop.images ? String(prop.images).split(";").filter(Boolean) : []);
 
-    modal.innerHTML = `
-        <div class="bg-[#FDFBF7] rounded-sm border border-[#e5ddca] shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col relative">
-            <button onclick="closePropertyModal()" class="absolute top-4 right-4 z-10 bg-white/80 hover:bg-white p-2 rounded-full shadow-lg transition-all">
+    content.innerHTML = `
+        <div class="bg-[#FDFBF7] rounded-sm border border-[#e5ddca] shadow-2xl w-full max-h-[90vh] overflow-hidden flex flex-col relative">
+            <button type="button" onclick="closePropertyModal()" class="absolute top-4 right-4 z-10 bg-white/80 hover:bg-white p-2 rounded-full shadow-lg transition-all" aria-label="Cerrar vista rápida">
                 <i data-lucide="x" class="w-6 h-6 text-brand-dark"></i>
             </button>
             
             <div class="overflow-y-auto">
-                <!-- Galería -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-2 p-2">
                     ${imgs.length === 0
                       ? `<div class="md:col-span-2 h-96 overflow-hidden rounded-2xl bg-gray-100 flex items-center justify-center text-gray-400">Sin imágenes</div>`
                       : imgs.map((img, i) => `
-                        <div class="${i === 0 ? 'md:col-span-2 h-96' : 'h-48'} overflow-hidden rounded-2xl shimmer-bg">
-                            <img src="${img}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-700 img-fade" onload="this.classList.add('img-loaded')">
+                        <div class="${i === 0 ? "md:col-span-2 h-96" : "h-48"} overflow-hidden rounded-2xl shimmer-bg">
+                            <img src="${img}" alt="" class="w-full h-full object-cover hover:scale-105 transition-transform duration-700 img-fade" onload="this.classList.add('img-loaded')">
                         </div>
-                    `).join('')}
+                    `).join("")}
                 </div>
                 
                 <div class="p-8">
@@ -856,7 +886,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         <a href="${detailHref}" class="w-full border border-[#C6A56A] text-brand-dark text-center py-4 rounded-2xl font-bold hover:bg-[#C6A56A]/15 transition-all flex items-center justify-center gap-2">
                             <i data-lucide="external-link" class="w-5 h-5"></i> Ver ficha completa
                         </a>
-                        <a href="https://wa.me/5491124987684?text=${whatsappText}" target="_blank" class="w-full bg-brand-green text-white text-center py-4 rounded-2xl font-bold hover:bg-brand-greenLight transition-all flex items-center justify-center gap-2">
+                        <a href="https://wa.me/5491124987684?text=${whatsappText}" target="_blank" rel="noopener" class="w-full bg-brand-green text-white text-center py-4 rounded-2xl font-bold hover:bg-brand-greenLight transition-all flex items-center justify-center gap-2">
                             <i data-lucide="message-circle" class="w-5 h-5"></i> Consultar por WhatsApp
                         </a>
                     </div>
@@ -866,15 +896,27 @@ document.addEventListener("DOMContentLoaded", () => {
     `;
 
     modal.classList.remove("hidden");
+    modal.classList.add("flex");
     document.body.style.overflow = "hidden";
     lucide.createIcons();
   };
 
   window.closePropertyModal = () => {
     const modal = document.getElementById("propertyModal");
-    if (modal) modal.classList.add("hidden");
-    document.body.style.overflow = "auto";
+    if (!modal) return;
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+    document.body.style.overflow = "";
   };
+
+  document.addEventListener("click", (event) => {
+    const previewBtn = event.target.closest(".js-property-preview");
+    if (!previewBtn) return;
+    event.preventDefault();
+    const rawId = previewBtn.getAttribute("data-property-id");
+    if (!rawId) return;
+    window.openPropertyModal(decodeURIComponent(rawId));
+  });
 
   /* ==========================================
      RENDER TABLA ADMIN
