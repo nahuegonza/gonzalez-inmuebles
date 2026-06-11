@@ -827,19 +827,24 @@ document.addEventListener("DOMContentLoaded", () => {
                 </div>
                 
                 <div class="p-8">
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-                        <div>
+                    <div class="flex flex-col gap-4 mb-8 md:flex-row md:justify-between md:items-start md:gap-6">
+                        <div class="min-w-0 flex-1">
                             <span class="bg-brand-green/10 text-brand-green text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-2 inline-block">
                                 ${prop.type} en ${prop.operation}
                             </span>
-                            <h2 class="text-3xl font-heading font-bold text-brand-dark">${prop.title}</h2>
-                            <p class="text-brand-gray flex items-center gap-2 mt-2">
-                                <i data-lucide="map-pin" class="w-5 h-5 text-brand-green"></i> ${prop.location}
+                            <h2 class="text-2xl sm:text-3xl font-heading font-bold text-brand-dark break-words">${prop.title}</h2>
+                            <p class="text-brand-gray flex items-start gap-2 mt-2">
+                                <i data-lucide="map-pin" class="w-5 h-5 text-brand-green shrink-0 mt-0.5"></i>
+                                <span class="break-words">${prop.location}</span>
                             </p>
                         </div>
-                        <div class="text-left md:text-right">
-                            <p class="text-sm text-brand-gray font-medium">Precio de Publicación</p>
-                            <p class="text-4xl font-bold text-brand-green">${prop.currency} ${formattedPrice}</p>
+                        <div class="w-full md:w-auto md:max-w-xs md:text-right md:shrink-0 border border-[#e5ddca] bg-white/60 rounded-sm px-4 py-3 md:border-0 md:bg-transparent md:p-0 md:rounded-none" style="overflow-wrap:anywhere">
+                            <p class="text-[10px] font-bold uppercase tracking-wider text-brand-gray mb-1.5 md:hidden">Precio de publicación</p>
+                            <p class="hidden md:block text-2xl lg:text-3xl font-bold text-brand-green leading-tight tabular-nums">${prop.currency} ${formattedPrice}</p>
+                            <div class="md:hidden">
+                                <span class="text-sm font-semibold text-brand-gray block">${prop.currency}</span>
+                                <span class="text-2xl font-bold text-brand-green leading-tight tabular-nums block">${formattedPrice}</span>
+                            </div>
                         </div>
                     </div>
                     
