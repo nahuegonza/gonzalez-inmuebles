@@ -70,6 +70,15 @@ const getPropertyDetailAbsoluteUrl = (id) => {
   return `${window.location.origin}${normalizedBasePath}/pages/property-detail.html?id=${encodeURIComponent(id)}`;
 };
 
+const normalizeType = (value) => (
+  typeof window.normalizePropertyType === 'function'
+    ? window.normalizePropertyType(value)
+    : String(value || '').trim()
+);
+
+const propertyTypeMatches = (propertyType, selectedType) =>
+  !selectedType || normalizeType(propertyType) === normalizeType(selectedType);
+
 document.addEventListener("DOMContentLoaded", () => {
   /* ==========================================
      INICIALIZACIÓN
@@ -77,6 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (window.lucide) {
     lucide.createIcons();
   }
+  window.renderPropertyTypeSelects?.();
 
   /* ==========================================
      FORMULARIO DE TASACIÓN
@@ -302,6 +312,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // 3. Normalizar imágenes a array
     properties = raw.map(p => ({
       ...p,
+      type: normalizeType(p.type),
       images: Array.isArray(p.images)
         ? p.images
         : (p.images ? String(p.images).split(";").filter(Boolean) : [])
@@ -353,10 +364,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const setFilterControlValue = (id, value) => {
     const control = document.getElementById(id);
     if (!control) return;
+    const normalizedValue = id.toLowerCase().includes('type') ? normalizeType(value) : String(value || '');
 
     if (control.tagName === "SELECT") {
       const matchingOption = Array.from(control.options).find(
-        (option) => option.value.toLowerCase() === String(value).toLowerCase()
+        (option) =>
+          option.value.toLowerCase() === String(value || '').toLowerCase() ||
+          normalizeType(option.value) === normalizedValue
       );
       control.value = matchingOption ? matchingOption.value : "";
       return;
@@ -402,7 +416,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     if (type) {
       filteredProperties = filteredProperties.filter(
-        (p) => p.type.toLowerCase() === type.toLowerCase()
+        (p) => propertyTypeMatches(p.type, type)
       );
     }
     if (location) {
@@ -436,7 +450,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     filteredProperties = properties.filter((p) => {
       const matchOp = !operation || p.operation.toLowerCase() === operation.toLowerCase();
-      const matchType = !type || p.type.toLowerCase() === type.toLowerCase();
+      const matchType = propertyTypeMatches(p.type, type);
       const normalizedPropertyLocation = p.location.toLowerCase();
       const matchLocationInput = !locationValue || normalizedPropertyLocation.includes(locationValue.toLowerCase());
       const matchLocationTags = selectedLocationFilters.length === 0 || selectedLocationFilters.some(
@@ -547,7 +561,7 @@ document.addEventListener("DOMContentLoaded", () => {
         id: editingId || Date.now(),
         title: document.getElementById("adminTitle").value,
         operation: document.getElementById("adminOperation").value,
-        type: document.getElementById("adminType").value,
+        type: normalizeType(document.getElementById("adminType").value),
         currency: document.getElementById("adminCurrency").value,
         price: Number(document.getElementById("adminPrice").value),
         location: document.getElementById("adminLocation").value,
@@ -622,7 +636,7 @@ document.addEventListener("DOMContentLoaded", () => {
     editingId = id;
     document.getElementById("adminTitle").value = prop.title;
     document.getElementById("adminOperation").value = prop.operation;
-    document.getElementById("adminType").value = prop.type;
+    document.getElementById("adminType").value = normalizeType(prop.type);
     document.getElementById("adminCurrency").value = prop.currency;
     document.getElementById("adminPrice").value = prop.price;
     document.getElementById("adminLocation").value = prop.location;
@@ -1155,17 +1169,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /* -- CATÁLOGOS (ADM-205) -- */
   const _getTypes = () => {
-    const defaults = ['Casa', 'Ph', 'Departamento', 'Terreno', 'Comercial', 'Emprendimiento', 'Cochera'];
-    return JSON.parse(localStorage.getItem('property_types_db') ||
-      JSON.stringify(defaults.map((n, i) => ({ id: i + 1, nombre: n, activo: true }))));
+    const defaults = window.getPropertyTypes?.(true) || (window.PROPERTY_TYPES || [
+      { value: 'Casa' },
+      { value: 'Departamento' },
+      { value: 'PH' },
+      { value: 'Terreno' },
+      { value: 'Comercial' },
+      { value: 'Emprendimiento' },
+      { value: 'Cochera' }
+    ]).map((type, index) => ({ ...type, id: index + 1, activo: true }));
+
+    return defaults.map((type, index) => ({
+      id: type.id || index + 1,
+      nombre: normalizeType(type.value || type.nombre),
+      activo: type.activo !== false
+    }));
   };
 
   window.updateTypesSelectors = () => {
-    const active = _getTypes().filter(t => t.activo);
-    document.querySelectorAll('.type-selector').forEach(sel => {
-      const cur = sel.value;
-      sel.innerHTML = active.map(t => `<option value="${t.nombre}" ${cur === t.nombre ? 'selected' : ''}>${t.nombre}</option>`).join('');
-    });
+    window.renderPropertyTypeSelects?.();
   };
 
   window.renderCatalogos = () => {
@@ -1246,7 +1268,7 @@ const searchBtn = document.getElementById("searchButton");
 if (searchBtn) {
   searchBtn.addEventListener("click", () => {
     const operation = document.getElementById("searchOperation")?.value;
-    const type = document.getElementById("searchType")?.value;
+    const type = normalizeType(document.getElementById("searchType")?.value);
     const location = document.getElementById("searchLocation")?.value;
 
     const params = new URLSearchParams();
