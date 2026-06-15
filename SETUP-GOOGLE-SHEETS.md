@@ -7,6 +7,7 @@ Este proyecto usa **Google Apps Script** como backend serverless gratuito para e
 1. Andá a [sheets.google.com](https://sheets.google.com) y creá una hoja nueva.
 2. Nombrá la primera hoja (pestaña) exactamente: **`Propiedades`**
 3. Las columnas se crean solas la primera vez que guardás una propiedad.
+   Si ya tenés una hoja existente con el esquema viejo, agregá una columna llamada exactamente **`description`**. El orden no es crítico porque el sitio lee por nombre de header.
 
 ## Paso 2 — Crear el Apps Script
 
@@ -56,8 +57,8 @@ function doPost(e) {
     var sheet = ss.getSheetByName('Propiedades') || ss.getActiveSheet();
 
     var DEFAULT_HEADERS = ['id','title','operation','type','currency','price',
-                           'location','beds','baths','sqm','images','status'];
-    var OPTIONAL_HEADERS = ['description','sqmCovered','sqmLand','antiguedad','agentId'];
+                           'location','beds','baths','sqm','images','status','description'];
+    var OPTIONAL_HEADERS = ['sqmCovered','sqmLand','antiguedad','agentId'];
 
     if (sheet.getLastRow() === 0) {
       sheet.appendRow(DEFAULT_HEADERS);

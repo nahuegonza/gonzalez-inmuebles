@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detalle de Propiedad - González Inmuebles</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -83,6 +84,7 @@
         </div>
     </main>
 
+    <script src="../js/property-types.js"></script>
     <script src="../js/main.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
@@ -373,6 +375,9 @@
                         mensaje: document.getElementById('dcMessage').value,
                         propiedad: prop.title,
                         propiedadId: prop.id,
+                        tipo: typeof window.normalizePropertyType === 'function'
+                            ? window.normalizePropertyType(prop.type)
+                            : (prop.type || ''),
                         estado: 'Nuevo'
                     };
                     // Guardar en localStorage para que el admin las vea (ADM-203)

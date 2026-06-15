@@ -5,9 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - González Inmuebles</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://widget.cloudinary.com/v2.0/global/all.js" type="text/javascript"></script>
+    <script src="js/property-types.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
@@ -85,6 +87,7 @@
             <!-- Cuerpo del modal -->
             <div class="p-8 space-y-6">
                 <input type="hidden" id="m_id">
+                <input type="hidden" id="m_agentId">
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div class="md:col-span-2">
@@ -100,7 +103,7 @@
                     <div>
                         <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">Tipo de Propiedad</label>
                         <select id="m_ty" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-green outline-none font-semibold text-gray-700">
-                            <option>Casa</option><option>Departamento</option><option>PH</option><option>Galpón</option><option>Terreno</option>
+                            <option value="">Cargando tipos...</option>
                         </select>
                     </div>
                     <div>
@@ -134,6 +137,29 @@
                         <div>
                             <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">Baños</label>
                             <input type="number" id="m_baths" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 md:col-span-2">
+                        <div>
+                            <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">m² Cubiertos</label>
+                            <input type="number" id="m_sqmCovered" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none">
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">m² Terreno</label>
+                            <input type="number" id="m_sqmLand" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none">
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">Antigüedad</label>
+                            <input type="text" id="m_antiguedad" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none">
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">Estado</label>
+                            <select id="m_status" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none font-semibold text-gray-700">
+                                <option>Publicada</option>
+                                <option>Borrador</option>
+                                <option>Pausada</option>
+                                <option>Vendida/Alquilada</option>
+                            </select>
                         </div>
                     </div>
                     <div class="md:col-span-2">
@@ -210,7 +236,7 @@
                         <div>
                             <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">Tipo de Propiedad</label>
                             <select id="ty" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-green outline-none font-semibold text-gray-700">
-                                <option>Casa</option><option>Departamento</option><option>PH</option><option>Galpón</option><option>Terreno</option>
+                                <option value="">Cargando tipos...</option>
                             </select>
                         </div>
                         <div>
@@ -246,6 +272,30 @@
                             <div>
                                 <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">Baños</label>
                                 <input type="number" id="baths" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 md:col-span-2">
+                            <div>
+                                <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">m² Cubiertos</label>
+                                <input type="number" id="sqmCovered" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none">
+                            </div>
+                            <div>
+                                <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">m² Terreno</label>
+                                <input type="number" id="sqmLand" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none">
+                            </div>
+                            <div>
+                                <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">Antigüedad</label>
+                                <input type="text" id="antiguedad" placeholder="Ej: A estrenar"
+                                    class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none">
+                            </div>
+                            <div>
+                                <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">Estado</label>
+                                <select id="status" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none font-semibold text-gray-700">
+                                    <option>Publicada</option>
+                                    <option>Borrador</option>
+                                    <option>Pausada</option>
+                                    <option>Vendida/Alquilada</option>
+                                </select>
                             </div>
                         </div>
                         <div class="md:col-span-2">
@@ -318,11 +368,23 @@
 
     <script>
         lucide.createIcons();
+        window.renderPropertyTypeSelects?.();
 
         /* ─── ESTADO GLOBAL ─── */
         let allProperties = [];
         let createImgs = [];   // imágenes del formulario de creación
         let editImgs   = [];   // imágenes del modal de edición
+
+        const panelNormalizeType = (value) => (
+            typeof window.normalizePropertyType === 'function'
+                ? window.normalizePropertyType(value)
+                : String(value || '').trim()
+        );
+
+        const normalizePanelProperty = (property) => ({
+            ...property,
+            type: panelNormalizeType(property?.type)
+        });
 
         function panelDebug(scope, message, data) {
             const prefix = `[debug:panel:${scope}]`;
@@ -420,8 +482,9 @@
         function renderEditPreviews() {
             document.getElementById('m_preview_grid').innerHTML =
                 editImgs.map((url, i) => imgCard(url, i, i === 0, 'removeEditImg', 'setCoverEdit')).join('');
-            document.getElementById('m_imgs_hidden').value = editImgs.join(';');
+            syncHiddenEdit();
         }
+        function syncHiddenEdit() { document.getElementById('m_imgs_hidden').value = editImgs.join(';'); }
         function removeEditImg(idx) { editImgs.splice(idx, 1); renderEditPreviews(); }
         function setCoverEdit(idx) { editImgs.unshift(editImgs.splice(idx, 1)[0]); renderEditPreviews(); }
 
@@ -476,9 +539,9 @@
             } catch (error) {
                 console.error('[debug:panel:propiedades] Error cargando /api/properties', error);
             }
-            const fromLocal = JSON.parse(localStorage.getItem('properties_db') || '[]');
+            const fromLocal = JSON.parse(localStorage.getItem('properties_db') || '[]').map(normalizePanelProperty);
             const merged = [...fromLocal];
-            fromAPI.forEach(p => {
+            fromAPI.map(normalizePanelProperty).forEach(p => {
                 if (!merged.find(x => String(x.id) === String(p.id))) merged.push(p);
             });
             allProperties = merged;
@@ -535,16 +598,20 @@
                 id: Date.now(),
                 title: document.getElementById('t').value,
                 operation: document.getElementById('o').value,
-                type: document.getElementById('ty').value,
+                type: panelNormalizeType(document.getElementById('ty').value),
                 currency: document.getElementById('cur').value,
                 price: Number(document.getElementById('pr').value) || 0,
                 location: document.getElementById('loc').value,
                 sqm: Number(document.getElementById('sqm').value) || 0,
+                sqmCovered: Number(document.getElementById('sqmCovered').value) || 0,
+                sqmLand: Number(document.getElementById('sqmLand').value) || 0,
+                antiguedad: document.getElementById('antiguedad').value,
                 beds: Number(document.getElementById('beds').value) || 0,
                 baths: Number(document.getElementById('baths').value) || 0,
                 description: document.getElementById('de').value,
                 images: [...createImgs],
-                status: 'Publicada'
+                status: document.getElementById('status').value || 'Publicada',
+                agentId: ''
             };
             panelDebug('propiedades', 'Nueva propiedad armada', summarizePanelProperty(d));
             if (!d.title || !d.price || !d.location) {
@@ -596,13 +663,18 @@
             document.getElementById('m_id').value   = p.id;
             document.getElementById('m_t').value    = p.title || '';
             document.getElementById('m_o').value    = p.operation || 'Venta';
-            document.getElementById('m_ty').value   = p.type || 'Casa';
+            document.getElementById('m_ty').value   = panelNormalizeType(p.type || 'Casa');
             document.getElementById('m_cur').value  = p.currency || 'USD';
             document.getElementById('m_pr').value   = p.price || '';
             document.getElementById('m_loc').value  = p.location || '';
             document.getElementById('m_sqm').value  = p.sqm || '';
             document.getElementById('m_beds').value = p.beds || '';
             document.getElementById('m_baths').value = p.baths || '';
+            document.getElementById('m_sqmCovered').value = p.sqmCovered || '';
+            document.getElementById('m_sqmLand').value = p.sqmLand || '';
+            document.getElementById('m_antiguedad').value = p.antiguedad || '';
+            document.getElementById('m_status').value = p.status || 'Publicada';
+            document.getElementById('m_agentId').value = p.agentId || '';
             document.getElementById('m_de').value   = p.description || '';
             document.getElementById('modal_subtitle').textContent = p.title;
             document.getElementById('m_loc_results').classList.add('hidden');
@@ -631,21 +703,27 @@
         async function saveModal() {
             const id = document.getElementById('m_id').value;
             panelDebug('propiedades', 'Guardando edición desde modal', { id });
+            const existing = allProperties.find(x => String(x.id) === String(id));
             const d = {
                 id,
                 title: document.getElementById('m_t').value,
                 operation: document.getElementById('m_o').value,
-                type: document.getElementById('m_ty').value,
+                type: panelNormalizeType(document.getElementById('m_ty').value),
                 currency: document.getElementById('m_cur').value,
                 price: Number(document.getElementById('m_pr').value) || 0,
                 location: document.getElementById('m_loc').value,
                 sqm: Number(document.getElementById('m_sqm').value) || 0,
+                sqmCovered: Number(document.getElementById('m_sqmCovered').value) || 0,
+                sqmLand: Number(document.getElementById('m_sqmLand').value) || 0,
+                antiguedad: document.getElementById('m_antiguedad').value,
                 beds: Number(document.getElementById('m_beds').value) || 0,
                 baths: Number(document.getElementById('m_baths').value) || 0,
                 description: document.getElementById('m_de').value,
                 images: [...editImgs],
-                status: 'Publicada'
+                status: document.getElementById('m_status').value || 'Publicada',
+                agentId: document.getElementById('m_agentId').value || existing?.agentId || ''
             };
+            if (existing?.featured !== undefined) d.featured = existing.featured;
             panelDebug('propiedades', 'Propiedad editada armada', summarizePanelProperty(d));
             if (!d.title || !d.price || !d.location) {
                 panelWarn('propiedades', 'Edición incompleta', summarizePanelProperty(d));
@@ -707,11 +785,33 @@
         }
 
         /* ─── CSV ─── */
+        function csvCell(value) {
+            return `"${String(value ?? '').replace(/"/g, '""')}"`;
+        }
+
         function descargarCSV() {
-            let csv = 'id,title,operation,type,currency,price,location,beds,baths,sqm,description,images,status\n';
+            let csv = 'id,title,operation,type,currency,price,location,beds,baths,sqm,images,status,description,sqmCovered,sqmLand,antiguedad,agentId\n';
             allProperties.forEach(p => {
                 const imgs = Array.isArray(p.images) ? p.images.join(';') : (p.images || '');
-                csv += [p.id, `"${p.title}"`, p.operation, p.type, p.currency, p.price, `"${p.location}"`, p.beds, p.baths, p.sqm, `"${p.description || ''}"`, `"${imgs}"`, p.status || 'Publicada'].join(',') + '\n';
+                csv += [
+                    p.id,
+                    p.title,
+                    p.operation,
+                    p.type,
+                    p.currency,
+                    p.price,
+                    p.location,
+                    p.beds,
+                    p.baths,
+                    p.sqm,
+                    imgs,
+                    p.status || 'Publicada',
+                    p.description || '',
+                    p.sqmCovered || '',
+                    p.sqmLand || '',
+                    p.antiguedad || '',
+                    p.agentId || ''
+                ].map(csvCell).join(',') + '\n';
             });
             const link = document.createElement('a');
             link.setAttribute('href', URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' })));

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Propiedades | González Inmuebles</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -114,10 +115,6 @@
                             <label class="block text-xs font-bold uppercase tracking-wider text-brand-gray mb-2">Tipo de Inmueble</label>
                             <select id="filterType" onchange="filterProperties()" class="filter-select">
                                 <option value="">Todos</option>
-                                <option value="Casa">Casa</option>
-                                <option value="Ph">Ph</option>
-                                <option value="Departamento">Departamento</option>
-                                <option value="Terreno">Terreno</option>
                             </select>
                         </div>
 
@@ -208,6 +205,7 @@
     </footer>
 
     <!-- Scripts -->
+    <script src="../js/property-types.js"></script>
     <script src="../js/main.js"></script>
     <script>
         function togglePropMenu() {
