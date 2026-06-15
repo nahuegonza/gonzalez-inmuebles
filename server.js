@@ -158,11 +158,10 @@ app.use(express.static(__dirname, {
    HELPERS
 ================================================ */
 const parseCSV = (text) => {
-  const rows = text.trim().split('\n');
+  const rows = parseCSVRows(text);
   if (rows.length < 2) return [];
-  const headers = csvSplit(rows[0]);
-  return rows.slice(1).map(row => {
-    const vals = csvSplit(row);
+  const headers = rows[0];
+  return rows.slice(1).filter(row => row.some(value => String(value ?? '').trim())).map(vals => {
     const obj = {};
     headers.forEach((h, i) => { obj[h.trim()] = (vals[i] ?? '').trim(); });
     if (vals.length > headers.length) {
@@ -172,15 +171,46 @@ const parseCSV = (text) => {
   });
 };
 
-const csvSplit = (line) => {
-  const out = []; let cur = '', inQ = false;
-  for (const c of line) {
-    if (c === '"') inQ = !inQ;
-    else if (c === ',' && !inQ) { out.push(cur); cur = ''; }
-    else cur += c;
+const parseCSVRows = (text) => {
+  if (!text.trim()) return [];
+
+  const rows = [];
+  let row = [];
+  let cur = '';
+  let inQuotes = false;
+  const input = text.replace(/^\uFEFF/, '');
+
+  for (let i = 0; i < input.length; i += 1) {
+    const char = input[i];
+    const next = input[i + 1];
+
+    if (char === '"') {
+      if (inQuotes && next === '"') {
+        cur += '"';
+        i += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      row.push(cur);
+      cur = '';
+    } else if ((char === '\n' || char === '\r') && !inQuotes) {
+      if (char === '\r' && next === '\n') i += 1;
+      row.push(cur);
+      rows.push(row);
+      row = [];
+      cur = '';
+    } else {
+      cur += char;
+    }
   }
-  out.push(cur);
-  return out;
+
+  if (cur.length || row.length) {
+    row.push(cur);
+    rows.push(row);
+  }
+
+  return rows;
 };
 
 const VALID_PROPERTY_STATUSES = new Set(['Publicada', 'Borrador', 'Pausada', 'Vendida/Alquilada']);
@@ -261,12 +291,49 @@ const isBlockedPropertyRow = (p) => {
 const CACHE_TTL = Number(process.env.CACHE_TTL_MS) || 5 * 60 * 1000; // 5 minutos
 let _cache = { data: null, expiresAt: 0 };
 
-const fetchProperties = async () => {
-  const url = process.env.SHEETS_PUB_URL;
-  if (!url) {
-    console.warn('[properties] SHEETS_PUB_URL no configurada');
-    return [];
+const normalizeFetchedProperties = (rows) => rows
+  .map(normalizePropertyRow)
+  .filter(p => !isBlockedPropertyRow(p))
+  .map(p => ({
+    ...p,
+    price: Number(p.price) || 0,
+    beds: Number(p.beds) || 0,
+    baths: Number(p.baths) || 0,
+    sqm: Number(p.sqm) || 0,
+    images: Array.isArray(p.images)
+      ? p.images.filter(Boolean)
+      : (p.images && String(p.images) !== '0' ? String(p.images).split(';').filter(Boolean) : [])
+  }));
+
+const fetchPropertiesFromAppsScript = async () => {
+  const url = process.env.APPS_SCRIPT_URL;
+  if (!url) throw new Error('APPS_SCRIPT_URL no configurada');
+
+  console.log('[properties] Leyendo Apps Script', getUrlInfo(url));
+  const r = await fetch(url);
+  const text = await r.text();
+  console.log('[properties] Respuesta Apps Script', {
+    status: r.status,
+    ok: r.ok,
+    contentType: r.headers.get('content-type'),
+    responseLength: text.length
+  });
+
+  if (text.trimStart().startsWith('<')) {
+    throw new Error(`Apps Script devolvió HTML: ${truncateText(text)}`);
   }
+
+  const parsed = JSON.parse(text);
+  if (!Array.isArray(parsed)) {
+    throw new Error(`Apps Script no devolvió un array: ${truncateText(text)}`);
+  }
+
+  return normalizeFetchedProperties(parsed);
+};
+
+const fetchPropertiesFromPublishedCsv = async () => {
+  const url = process.env.SHEETS_PUB_URL;
+  if (!url) throw new Error('SHEETS_PUB_URL no configurada');
 
   console.log('[properties] Leyendo CSV publicado', getUrlInfo(url));
   const r = await fetch(url);
@@ -279,23 +346,29 @@ const fetchProperties = async () => {
   });
 
   if (text.trimStart().startsWith('<')) {
-    console.warn('[properties] La Sheet devolvió HTML — publicala en: Archivo → Compartir → Publicar en la web → CSV', {
-      preview: truncateText(text)
-    });
+    throw new Error(`La Sheet devolvió HTML: ${truncateText(text)}`);
+  }
+
+  return normalizeFetchedProperties(parseCSV(text));
+};
+
+const fetchProperties = async () => {
+  if (process.env.APPS_SCRIPT_URL) {
+    try {
+      return await fetchPropertiesFromAppsScript();
+    } catch (e) {
+      console.warn('[properties] No se pudo leer Apps Script, usando CSV publicado como fallback', {
+        message: e.message
+      });
+    }
+  }
+
+  if (!process.env.SHEETS_PUB_URL) {
+    console.warn('[properties] SHEETS_PUB_URL no configurada');
     return [];
   }
 
-  return parseCSV(text)
-    .map(normalizePropertyRow)
-    .filter(p => !isBlockedPropertyRow(p))
-    .map(p => ({
-      ...p,
-      price: Number(p.price) || 0,
-      beds: Number(p.beds) || 0,
-      baths: Number(p.baths) || 0,
-      sqm: Number(p.sqm) || 0,
-      images: p.images && String(p.images) !== '0' ? String(p.images).split(';').filter(Boolean) : []
-    }));
+  return fetchPropertiesFromPublishedCsv();
 };
 
 /* ================================================
